@@ -1,30 +1,21 @@
 import { Route, Router, Routes } from "@solidjs/router";
-import { Component } from "solid-js";
+import { Component, lazy } from "solid-js";
+import { DataProvider } from "./DataContext";
 
-const Intro = () => {
-	return (
-		<>
-			<div>このWebサイトは大学の課題として作られました。</div>
-			<a href="/home" class="text-blue-600">続ける</a>
-		</>
-	);
-};
-
-const Home = () => {
-	return (
-		<div>Comming soon...</div>
-	)
-}
+const Intro = lazy(() => import("./Intro"));
+const Home = lazy(() => import("./Home"));
 
 const App: Component = () => {
-	return (
-		<Router>
-			<Routes>
-				<Route path="/" element={Intro} />
-				<Route path="/home" element={Home} />
-			</Routes>
-		</Router>
-	)
+  return (
+    <DataProvider>
+      <Router>
+        <Routes>
+          <Route path="/" component={Intro} />
+          <Route path="/home" component={Home} />
+        </Routes>
+      </Router>
+    </DataProvider>
+  );
 };
 
 export default App;
