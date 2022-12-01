@@ -27,8 +27,8 @@ export interface ReceiptModel {
 }
 
 export interface ReceiptItemModel {
-	receiptId: number;
+  receiptId: number;
   productId: number;
-	value: number;
+  value: number;
   count: number;
 }
