@@ -1,16 +1,17 @@
 import { A, useSearchParams } from "@solidjs/router";
-import { Accessor, Component, createResource, Index, Show } from "solid-js";
+import { Component, createResource, Index, Show } from "solid-js";
 import { CartItemModel } from "../Models";
 import { service } from "../Service";
-import Pagenate from "./Pagenate";
+import PagenateBar from "./PagenateBar";
 
 // 1ページに表示される数
 const COUNT_PER_PAGE = 8;
 
 // カート内アイテムの一覧をリスト表示
 const Cart: Component = () => {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const page = () => parseInt(params.page) || 0;
+  const setPage = (page: number) => setParams({ ...params, page });
 
   // カート内アイテムの総額を取得
   const [totalValue, { refetch: refetchTotalValue }] = createResource(
@@ -28,6 +29,7 @@ const Cart: Component = () => {
     await service.popFromCart(id, count);
     await refetchTotalValue();
     await refetchCartItems();
+    await refetchCount();
   };
 
   // カート内アイテムを購入
@@ -35,56 +37,65 @@ const Cart: Component = () => {
     await service.purchaseInCart();
     await refetchTotalValue();
     await refetchCartItems();
+    await refetchCount();
   };
 
   // ページ数を計算
-  const [count] = createResource(async () => await service.getCartItemCount());
+  const [count, { refetch: refetchCount }] = createResource(
+    async () => await service.getCartItemCount()
+  );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
   return (
     <div class="p-3">
       <div class="mb-5 text-2xl font-bold">カート内</div>
 
-      <div class="mb-5 space-y-6">
-        <Index
-          each={cartItems()}
-          fallback={
-            <div class="text-slate-600">カート内にアイテムはありません。</div>
-          }
-        >
-          {(x) => <CartItem cartItem={x} popFromCart={popFromCart} />}
-        </Index>
-      </div>
+      <Show
+        when={0 < count()}
+        fallback={
+          <div class="text-slate-600">カート内に商品はありません。</div>
+        }
+      >
+        <div class="mb-5 space-y-6">
+          <Index each={cartItems()}>
+            {(x) => <CartItem cartItem={x} popFromCart={popFromCart} />}
+          </Index>
+        </div>
 
-      <div class="text-center">
-        <Pagenate maxPageCount={maxPageCount} />
-      </div>
+        <div class="text-center">
+          <PagenateBar
+            page={page}
+            setPage={setPage}
+            maxPageCount={maxPageCount}
+          />
+        </div>
 
-      <div class="mb-5 flex">
-        <div class="text-xl font-bold">合計金額</div>
-        <div class="flex-grow"></div>
-        <Show when={totalValue()}>
-          <div class="text-xl text-rose-600">
-            \\ {totalValue().toLocaleString()}
-          </div>
-        </Show>
-      </div>
+        <div class="mb-5 flex">
+          <div class="text-xl font-bold">合計金額</div>
+          <div class="flex-grow"></div>
+          <Show when={totalValue()}>
+            <div class="text-xl text-rose-600">
+              \\ {totalValue().toLocaleString()}
+            </div>
+          </Show>
+        </div>
 
-      <div class="text-center">
-        <button
-          onClick={(_) => purchaceInCart()}
-          class="rounded bg-yellow-400 p-3"
-        >
-          購入手続き
-        </button>
-      </div>
+        <div class="text-center">
+          <button
+            onClick={(_) => purchaceInCart()}
+            class="rounded bg-yellow-400 p-3"
+          >
+            購入手続き
+          </button>
+        </div>
+      </Show>
     </div>
   );
 };
 
 // カート内アイテムのリスト項目
 const CartItem: Component<{
-  cartItem: Accessor<CartItemModel>;
+  cartItem: () => CartItemModel;
   popFromCart: (id: number, count: number) => Promise<void>;
 }> = (props) => {
   // カート内アイテムから商品情報の取得

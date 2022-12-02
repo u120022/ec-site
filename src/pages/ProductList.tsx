@@ -1,16 +1,17 @@
 import { A, useSearchParams } from "@solidjs/router";
-import { Accessor, Component, createResource, Index } from "solid-js";
+import { Component, createResource, Index } from "solid-js";
 import { ProductModel } from "../Models";
 import { service } from "../Service";
-import Pagenate from "./Pagenate";
+import PagenateBar from "./PagenateBar";
 
 // 1ページに表示する商品の数
 const COUNT_PER_PAGE = 8;
 
 // 商品の一覧をグリッド表示
 const ProductList: Component = () => {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const page = () => parseInt(params.page) || 0;
+  const setPage = (page: number) => setParams({ ...params, page });
 
   // 商品を取得
   // pageが変更されると更新
@@ -47,7 +48,11 @@ const ProductList: Component = () => {
           <div class="h-[2rem]"></div>
 
           <div class="p-3 text-center">
-            <Pagenate maxPageCount={maxPageCount} />
+            <PagenateBar
+              page={page}
+              setPage={setPage}
+              maxPageCount={maxPageCount}
+            />
           </div>
         </div>
       </div>
@@ -56,7 +61,9 @@ const ProductList: Component = () => {
 };
 
 // 商品のグリッド項目
-const ProductCard: Component<{ product: Accessor<ProductModel> }> = (props) => {
+const ProductCard: Component<{
+  product: () => ProductModel;
+}> = (props) => {
   return (
     <div>
       <A href={"/products/" + props.product().id}>

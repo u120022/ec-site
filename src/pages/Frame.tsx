@@ -4,14 +4,24 @@ import { Component } from "solid-js";
 const Frame: Component = () => {
   return (
     <div class="flex min-h-[100vh] flex-col">
-      <div class="sticky top-0 mb-6 w-full bg-white">
-        <div class="flex gap-6 p-6">
-          <A href="/">ec-site</A>
+      <div class="sticky top-0 mb-6 w-full border-b border-slate-300 bg-white">
+        <div class="flex gap-3 p-3">
+          <A class="p-3" href="/">
+            ec-site
+          </A>
           <div class="flex-grow"></div>
-          <A href="/products">ストア</A>
-          <A href="/cart">カート</A>
-          <A href="/receipts">購入履歴</A>
-          <div>個人情報</div>
+          <A class="p-3" href="/products">
+            ストア
+          </A>
+          <A class="p-3" href="/cart">
+            カート
+          </A>
+          <A class="p-3" href="/receipts">
+            購入履歴
+          </A>
+          <A class="p-3" href="/">
+            個人情報
+          </A>
         </div>
       </div>
 

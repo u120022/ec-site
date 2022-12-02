@@ -1,14 +1,7 @@
-import { useParams, useSearchParams } from "@solidjs/router";
-import {
-  Accessor,
-  Component,
-  createResource,
-  createSignal,
-  Index,
-  Show,
-} from "solid-js";
+import { useParams } from "@solidjs/router";
+import { Component, createResource, createSignal, Index, Show } from "solid-js";
 import { service } from "../Service";
-import Pagenate from "./Pagenate";
+import PagenateBar from "./PagenateBar";
 
 // 商品の詳細を表示
 const Product: Component = () => {
@@ -21,6 +14,7 @@ const Product: Component = () => {
     service.getProduct(id)
   );
 
+  // カート内商品の情報を取得
   const [cartItem, { refetch }] = createResource(id, async (id: number) =>
     service.getCartItem(id)
   );
@@ -87,20 +81,22 @@ const Product: Component = () => {
 const COUNT_PER_PAGE = 10;
 
 // 1種類の商品のレビュー一覧をリスト表示
-const ReviewList: Component<{ productId: Accessor<number> }> = (props) => {
-  const [params] = useSearchParams();
-  const page = () => parseInt(params.page) || 0;
+const ReviewList: Component<{
+  productId: () => number;
+}> = (props) => {
+  // ページの状態を保持
+  const [page, setPage] = createSignal(0);
 
-  // コメントを取得
+  // レビュー一覧を取得
   // productIdかpageが変更されると更新
-  const [comments, { refetch }] = createResource(
+  const [comments, { refetch: refetchComments }] = createResource(
     () => ({ id: props.productId(), page: page() }),
     async ({ id, page }) => await service.getComments(id, page, COUNT_PER_PAGE)
   );
 
   // ページ数を計算
   // productIdが変更されると更新
-  const [count] = createResource(
+  const [count, { refetch: refetchCount }] = createResource(
     props.productId,
     async (id: number) => await service.getCommentCount(id)
   );
@@ -110,7 +106,8 @@ const ReviewList: Component<{ productId: Accessor<number> }> = (props) => {
   const [text, setText] = createSignal("");
   const createComment = async () => {
     await service.createComment(props.productId(), text());
-    await refetch();
+    await refetchComments();
+    await refetchCount();
     setText("");
   };
 
@@ -155,7 +152,11 @@ const ReviewList: Component<{ productId: Accessor<number> }> = (props) => {
       </div>
 
       <div class="text-center">
-        <Pagenate maxPageCount={maxPageCount} />
+        <PagenateBar
+          page={page}
+          setPage={setPage}
+          maxPageCount={maxPageCount}
+        />
       </div>
     </div>
   );
