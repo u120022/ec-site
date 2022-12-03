@@ -10,6 +10,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/js-cookie": "^3.0.2",
     "autoprefixer": "^10.4.8",
     "postcss": "^8.4.16",
     "prettier": "^2.7.1",
@@ -22,6 +23,7 @@
   "dependencies": {
     "@solidjs/router": "^0.5.1",
     "dexie": "^3.2.2",
+    "js-cookie": "^3.0.1",
     "solid-js": "^1.5.1"
   }
 }

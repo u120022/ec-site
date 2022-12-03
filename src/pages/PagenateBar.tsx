@@ -1,5 +1,6 @@
 import { Component, Show } from "solid-js";
 
+// ページの表示と操作を行うコンポーネント
 const PagenateBar: Component<{
   page: () => number;
   setPage: (page: number) => void;
@@ -19,14 +20,14 @@ const PagenateBar: Component<{
 
   return (
     <Show when={1 < props.maxPageCount()}>
-      <div>
-        <button onClick={(_) => prev()} class="mx-3 p-3">
+      <div class="space-x-6">
+        <button onClick={prev} class="p-3">
           &lt
         </button>
-        <span class="mx-3 p-3">
+        <span class="p-3">
           {props.page() + 1} / {props.maxPageCount()}
         </span>
-        <button onClick={(_) => next()} class="mx-3 p-3">
+        <button onClick={next} class="p-3">
           &gt
         </button>
       </div>

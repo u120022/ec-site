@@ -48,7 +48,7 @@ export class Service {
 	// 商品をカートに追加
 	async pushToCart(productId: number, count: number) {
 		await db.transaction("rw", db.cartItems, db.products, async () => {
-			const cartItem = await db.cartItems.get(productId);
+			const cartItem = await db.cartItems.get({ productId });
 			const product = await db.products.get(productId);
 
 			// 存在しない場合は追加して終了
@@ -64,7 +64,7 @@ export class Service {
 
 			// カート内在庫数が商品在庫数を上回らないようにする
 			if (cartItem.count <= product.count) {
-				await db.cartItems.update(cartItem.productId, cartItem);
+				await db.cartItems.update(cartItem.id, cartItem);
 			}
 		});
 	}
@@ -72,7 +72,7 @@ export class Service {
 	// 商品をカートから取り出す
 	async popFromCart(productId: number, count: number) {
 		await db.transaction("rw", db.cartItems, async () => {
-			const cartItem = await db.cartItems.get(productId);
+			const cartItem = await db.cartItems.get({ productId });
 
 			// 存在しない場合は直ちに終了
 			if (!cartItem) {
@@ -81,12 +81,12 @@ export class Service {
 
 			// カート内在庫数が0になった場合は削除して終了
 			if (cartItem.count - count <= 0) {
-				db.cartItems.delete(cartItem.productId);
+				db.cartItems.delete(cartItem.id);
 				return;
 			}
 
 			cartItem.count -= count;
-			await db.cartItems.update(cartItem.productId, cartItem);
+			await db.cartItems.update(cartItem.id, cartItem);
 		});
 	}
 
@@ -100,7 +100,7 @@ export class Service {
 
 	// カート内商品を取得
 	async getCartItem(productId: number) {
-		return await db.cartItems.get(productId);
+		return await db.cartItems.get({ productId });
 	}
 
 	// カート内商品の総数を取得
@@ -201,6 +201,63 @@ export class Service {
 	// 購入商品の数を取得
 	async getReceiptItemCount(receiptId: number) {
 		return await db.receiptItems.where({ receiptId }).count();
+	}
+
+	// ユーザの追加
+	async createUser(name: string, email: string, password: string) {
+		// 名前が0文字の場合は直ちに終了
+		if (name.length == 0) return "ZERO_LENGTH_NAME";
+
+		// Eメールが0文字の場合は直ちに終了
+		if (email.length == 0) return "ZERO_LENGTH_EMAIL";
+
+		// パスワードが0文字の場合は直ちに終了
+		if (password.length == 0) return "ZERO_LENGTH_PASSWORD";
+
+		// 既に存在するメールの場合は直ちに終了
+		const sameEmailCount = await db.users.where({ email }).count();
+		if (0 < sameEmailCount) return "ALREADY_EXISTED_EMAIL";
+
+		await db.users.add({ name, password, email });
+		return "SUCCESSFUL";
+	}
+
+	// ユーザの取得
+	async getUser(sessionId: string) {
+		if (!sessionId) return;
+
+		const session = await db.sessions.get(sessionId);
+		return await db.users.get(session.userId);
+	}
+
+	// セッションの追加
+	async createSession(email: string, password: string) {
+		// 該当するユーザが存在しない場合は直ちに終了
+		const user = await db.users.get({ email });
+		if (!user) return;
+
+		// パスワードが異なる場合は直ちに終了
+		if (user.password != password) return;
+
+		// (注意)トークンをUUIDv4として生成
+		const id = crypto.randomUUID();
+
+		const date = new Date();
+		await db.sessions.add({ id, userId: user.id, date });
+		return id;
+	}
+
+	// セッションの削除
+	async deleteSession(id: string) {
+		const session = await db.sessions.get(id);
+		await db.sessions.delete(session.id);
+	}
+
+	// セッション一覧を取得
+	async getSessions(id: string) {
+		const session = await db.sessions.get(id);
+		const userId = session.userId;
+		return await db.sessions.where({ userId }).toArray();
 	}
 }
 

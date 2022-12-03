@@ -16,6 +16,7 @@ export interface CommentModel {
 }
 
 export interface CartItemModel {
+  id?: number;
   productId: number;
   count: number;
 }
@@ -27,8 +28,40 @@ export interface ReceiptModel {
 }
 
 export interface ReceiptItemModel {
+  id?: number;
   receiptId: number;
   productId: number;
   value: number;
   count: number;
+}
+
+export interface UserModel {
+  id?: number;
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface SessionModel {
+  id: string;
+  userId: number;
+  date: Date;
+}
+
+export interface AddressModel {
+  id?: number;
+  userId: number;
+  name: string;
+  country: string;
+  address: string;
+  zipcode: string;
+}
+
+export interface CardModel {
+  id?: number;
+  userId: number;
+  cardNumber: string;
+  holderName: string;
+  expirationDate: string;
+  securityCode: string;
 }
