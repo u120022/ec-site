@@ -215,12 +215,12 @@ export class Service {
     // Eメールが0文字の場合は直ちに終了
     if (email.length == 0) return "INVALID";
 
-    // パスワードが0文字の場合は直ちに終了
-    if (password.length == 0) return "INVALID";
-
     // 既に存在するメールの場合は直ちに終了
     const count = await db.users.where({ email }).count();
     if (0 < count) return "EXISTED_EMAIL";
+
+    // パスワードが0文字の場合は直ちに終了
+    if (password.length == 0) return "INVALID";
 
     // パスワードをダイジェスト値として保存
     const digest = await genHashSHA256(password);
@@ -230,11 +230,46 @@ export class Service {
   }
 
   // ユーザの取得
-  async getUser(sessionId: string) {
-    if (!sessionId) return undefined;
-
-    const session = await db.sessions.get(sessionId);
+  async getUser(token: string) {
+    if (!token) return undefined;
+    const session = await db.sessions.get(token);
     return await db.users.get(session.userId);
+  }
+
+  // ユーザ情報の変更
+  async updateUser(
+    token: string,
+    params: { name?: string; email?: string; password?: string }
+  ) {
+    const user = await this.getUser(token);
+    if (!user) return;
+
+    // 氏名の変更
+    if (params.name) {
+      if (params.name.length == 0) return "INVALID";
+      user.name = params.name;
+    }
+
+    // メールの変更
+    if (params.email) {
+      if (params.email.length == 0) return "INVALID";
+
+      const count = await db.users.where({ email: params.email }).count();
+      if (0 < count) return "EXISTED_EMAIL";
+
+      user.email = params.email;
+    }
+
+    // パスワードの変更
+    if (params.password) {
+      if (params.password.length == 0) return "INVALID";
+
+      const digest = await genHashSHA256(params.password);
+      user.digest = digest;
+    }
+
+    db.users.update(user.id, user);
+    return "SUCCESSFUL";
   }
 
   // セッションの生成

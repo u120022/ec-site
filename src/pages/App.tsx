@@ -10,7 +10,12 @@ const ProductList = lazy(() => import("./ProductList"));
 const Product = lazy(() => import("./Product"));
 const Cart = lazy(() => import("./Cart"));
 const ReceiptList = lazy(() => import("./ReceiptList"));
+const Personal = lazy(() => import("./Personal"));
 const User = lazy(() => import("./User"));
+const UserModify = lazy(() => import("./UserModify"));
+const AddressList = lazy(() => import("./AddressList"));
+const PaymentList = lazy(() => import("./PaymentList"));
+const SessionList = lazy(() => import("./SessionList"));
 
 const App: Component = () => {
   return (
@@ -24,7 +29,13 @@ const App: Component = () => {
         <Route path="/products/:id" component={Product} />
         <Route path="/cart" component={Cart} />
         <Route path="/receipts" component={ReceiptList} />
-        <Route path="/user" component={User} />
+        <Route path="/personal" component={Personal}>
+          <Route path={["/", "/user"]} component={User} />
+          <Route path={"/user_modify"} component={UserModify} />
+          <Route path={"/address"} component={AddressList} />
+          <Route path={"/payment"} component={PaymentList} />
+          <Route path="/session" component={SessionList} />
+        </Route>
       </Route>
     </Routes>
   );

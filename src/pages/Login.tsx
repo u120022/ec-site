@@ -7,7 +7,7 @@ import { createForm } from "./form/Validation";
 // ユーザーのログインフォーム
 const Login: Component = () => {
   const form = createForm();
-  const [loginError, setLoginError] = createSignal("");
+  const [formError, setFormError] = createSignal("");
 
   // セッションの生成
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const Login: Component = () => {
 
     // ログインが失敗した場合
     if (!sessionToken) {
-      setLoginError("ログインに失敗しました。");
+      setFormError("ログインに失敗しました。");
       return;
     }
 
@@ -33,7 +33,7 @@ const Login: Component = () => {
   return (
     <div class="flex min-h-[100vh] min-w-[1024px]">
       <div class="mx-auto flex basis-1/3 flex-col">
-        <div class="my-auto  rounded border border-slate-300 p-12">
+        <div class="my-auto rounded border border-slate-300 p-12">
           <form
             class="flex flex-col gap-6"
             method="dialog"
@@ -42,7 +42,7 @@ const Login: Component = () => {
           >
             <div>
               <div class="text-3xl font-bold">ログイン</div>
-              <span class="text-rose-600">{loginError()}</span>
+              <span class="text-rose-600">{formError()}</span>
             </div>
 
             <div>

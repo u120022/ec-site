@@ -6,7 +6,7 @@ import { createForm } from "./form/Validation";
 // ユーザーの新規登録フォーム
 const Register: Component = () => {
   const form = createForm();
-  const [registerError, setRegisterError] = createSignal("");
+  const [formError, setFormError] = createSignal("");
 
   // 新規登録を実行
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const Register: Component = () => {
 
     // カスタムバリデーションチェック
     if (form.fields.password != form.fields.confirmPassword) {
-      setRegisterError("パスワード(確認用)が異なります。");
+      setFormError("パスワード(確認用)が異なります。");
       return;
     }
 
@@ -28,13 +28,13 @@ const Register: Component = () => {
 
     // 新規登録が失敗した場合(メールアドレスが既に存在する場合)
     if (status == "EXISTED_EMAIL") {
-      setRegisterError("既に存在するメールアドレスです。");
+      setFormError("既に存在するメールアドレスです。");
       return;
     }
 
     // 新規登録が失敗した場合
     if (status != "SUCCESSFUL") {
-      setRegisterError("新規登録に失敗しました。");
+      setFormError("新規登録に失敗しました。");
       return;
     }
 
@@ -54,7 +54,7 @@ const Register: Component = () => {
           >
             <div>
               <div class="text-3xl font-bold">新規登録</div>
-              <span class="text-rose-600">{registerError()}</span>
+              <span class="text-rose-600">{formError()}</span>
             </div>
 
             <div>
