@@ -1,4 +1,5 @@
 import { db } from "./Db";
+import { genHashSHA256 } from "./Hash";
 
 export class Service {
   // 商品一覧を取得
@@ -21,6 +22,9 @@ export class Service {
 
   // コメントを追加
   async createComment(productId: number, body: string) {
+    // 文字列でないもしくは16文字以下の場合は終了
+    if (!body || body.length < 16) return;
+
     const date = new Date();
 
     await db.comments.add({ productId, body, date });
@@ -203,59 +207,61 @@ export class Service {
     return await db.receiptItems.where({ receiptId }).count();
   }
 
-  // ユーザの追加
-  async createUser(name: string, email: string, password: string) {
+  // ユーザの新規登録
+  async registerUser(name: string, email: string, password: string) {
     // 名前が0文字の場合は直ちに終了
-    if (name.length == 0) return "ZERO_LENGTH_NAME";
+    if (name.length == 0) return "INVALID";
 
     // Eメールが0文字の場合は直ちに終了
-    if (email.length == 0) return "ZERO_LENGTH_EMAIL";
+    if (email.length == 0) return "INVALID";
 
     // パスワードが0文字の場合は直ちに終了
-    if (password.length == 0) return "ZERO_LENGTH_PASSWORD";
+    if (password.length == 0) return "INVALID";
 
     // 既に存在するメールの場合は直ちに終了
-    const sameEmailCount = await db.users.where({ email }).count();
-    if (0 < sameEmailCount) return "ALREADY_EXISTED_EMAIL";
+    const count = await db.users.where({ email }).count();
+    if (0 < count) return "EXISTED_EMAIL";
 
-    await db.users.add({ name, password, email });
+    // パスワードをダイジェスト値として保存
+    const digest = await genHashSHA256(password);
+
+    await db.users.add({ name, digest, email });
     return "SUCCESSFUL";
   }
 
   // ユーザの取得
   async getUser(sessionId: string) {
-    if (!sessionId) return;
+    if (!sessionId) return undefined;
 
     const session = await db.sessions.get(sessionId);
     return await db.users.get(session.userId);
   }
 
-  // セッションの追加
-  async createSession(email: string, password: string) {
+  // セッションの生成
+  async login(email: string, password: string) {
     // 該当するユーザが存在しない場合は直ちに終了
     const user = await db.users.get({ email });
-    if (!user) return;
+    if (!user) return undefined;
 
-    // パスワードが異なる場合は直ちに終了
-    if (user.password != password) return;
+    // パスワードのダイジェスト値が異なる場合は直ちに終了
+    const digest = await genHashSHA256(password);
+    if (user.digest != digest) return undefined;
 
     // (注意)トークンをUUIDv4として生成
-    const id = crypto.randomUUID();
-
+    const token = crypto.randomUUID();
     const date = new Date();
-    await db.sessions.add({ id, userId: user.id, date });
-    return id;
+    await db.sessions.add({ token, userId: user.id, date });
+    return token;
   }
 
   // セッションの削除
-  async deleteSession(id: string) {
-    const session = await db.sessions.get(id);
-    await db.sessions.delete(session.id);
+  async deleteSession(token: string) {
+    await db.sessions.delete(token);
   }
 
   // セッション一覧を取得
-  async getSessions(id: string) {
-    const session = await db.sessions.get(id);
+  async getSessions(token: string) {
+    const session = await db.sessions.get(token);
     const userId = session.userId;
     return await db.sessions.where({ userId }).toArray();
   }

@@ -8,6 +8,8 @@ const User: Component = () => {
           <div class="rounded bg-slate-100 p-3">プロフィールの表示・編集</div>
           <div class="rounded bg-slate-100 p-3">住所の表示・編集</div>
           <div class="rounded bg-slate-100 p-3">支払い方法の表示・編集</div>
+          <div class="rounded bg-slate-100 p-3">セッションの表示・編集</div>
+          <div class="rounded bg-slate-100 p-3">ログアウト</div>
         </div>
 
         <div class="flex-grow"></div>

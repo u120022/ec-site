@@ -5,9 +5,9 @@ import { service } from "../Service";
 
 const Frame: Component = () => {
   // ユーザ認証を行う
-  const token = () => Cookies.get("TOKEN");
+  const sessionToken = () => Cookies.get("SESSION_TOKEN");
   const [user] = createResource(
-    token,
+    sessionToken,
     async (token) => await service.getUser(token)
   );
 

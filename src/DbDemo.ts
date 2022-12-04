@@ -1,17 +1,20 @@
 import { db } from "./Db";
 
+// デモ用のデータ
 export const populate = () => {
   // ユーザー
   db.users.bulkAdd([
     {
       name: "Alice",
       email: "alice@example.com",
-      password: "alice",
+      digest:
+        "2bd806c97f0e00af1a1fc3328fa763a9269723c8db8fac4f93af71db186d6e90",
     },
     {
       name: "Bob",
       email: "bob@example.com",
-      password: "bob",
+      digest:
+        "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
     },
   ]);
 

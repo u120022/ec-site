@@ -35,7 +35,7 @@ export class Db extends Dexie {
       users: "++id, &email",
       addresses: "++id, userId",
       cards: "++id, userId",
-      sessions: "&id, userId",
+      sessions: "&token, userId",
     });
   }
 }

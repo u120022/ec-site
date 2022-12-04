@@ -1,6 +1,7 @@
 import { useParams } from "@solidjs/router";
 import { Component, createResource, createSignal, Index, Show } from "solid-js";
 import { service } from "../Service";
+import { createForm } from "./form/Validation";
 import PagenateBar from "./PagenateBar";
 
 // 商品の詳細を表示
@@ -63,7 +64,7 @@ const Product: Component = () => {
           </div>
         </div>
 
-        <ReviewList productId={() => product().id} />
+        <CommentList productId={() => product().id} />
       </Show>
     </div>
   );
@@ -72,14 +73,14 @@ const Product: Component = () => {
 // 1ページに表示するコメントの数
 const COUNT_PER_PAGE = 10;
 
-// 1種類の商品のレビュー一覧をリスト表示
-const ReviewList: Component<{
+// 1種類の商品のコメント一覧をリスト表示
+const CommentList: Component<{
   productId: () => number;
 }> = (props) => {
   // ページの状態を保持
   const [page, setPage] = createSignal(0);
 
-  // レビュー一覧を取得
+  // コメント一覧を取得
   // productIdかpageが変更されると更新
   const [comments, { refetch: refetchComments }] = createResource(
     () => ({ id: props.productId(), page: page() }),
@@ -94,23 +95,26 @@ const ReviewList: Component<{
   );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
-  // コメント投稿フォーム
-  const [text, setText] = createSignal("");
+  // コメントの投稿
+  const form = createForm();
   const createComment = async () => {
-    await service.createComment(props.productId(), text());
+    if (!form.validate()) return;
+
+    await service.createComment(props.productId(), form.fields.body);
     await refetchComments();
     await refetchCount();
-    setText("");
+
+    form.clear();
   };
 
   return (
     <div class="space-y-3">
-      <div class="text-2xl font-bold">レビュー</div>
+      <div class="text-2xl font-bold">コメント</div>
 
       <Show
         when={0 < count()}
         fallback={
-          <div class="text-slate-600">この商品にレビューはありません。</div>
+          <div class="text-slate-600">この商品にコメントはありません。</div>
         }
       >
         <ul class="space-y-3">
@@ -124,23 +128,33 @@ const ReviewList: Component<{
         </ul>
       </Show>
 
-      <div class="space-y-3 rounded border border-slate-300 p-3">
-        <div class="">レビューを投稿する</div>
-
-        <textarea
-          rows={8}
-          placeholder="テキストを入力。"
-          class="w-full resize-none rounded border border-slate-300 p-2"
-          value={text()}
-          onInput={(e) => setText(e.currentTarget.value)}
-        />
-
-        <button
-          class="rounded bg-blue-600 p-3 py-2 text-white"
-          onClick={createComment}
+      <div class="rounded border border-slate-300 p-3">
+        <form
+          class="space-y-3"
+          method="dialog"
+          novalidate
+          onSubmit={createComment}
         >
-          投稿
-        </button>
+          <div class="">コメントを投稿する</div>
+
+          <div>
+            <textarea
+              name="body"
+              required
+              rows={8}
+              minlength={16}
+              placeholder="テキストを入力。"
+              class="w-full resize-none rounded border border-slate-300 p-2"
+              ref={form.register}
+            />
+            <span class="text-rose-600">{form.errors.body}</span>
+          </div>
+
+          <input
+            type="submit"
+            class="rounded bg-blue-600 p-3 py-2 text-white"
+          />
+        </form>
       </div>
 
       <Show when={1 < maxPageCount()}>

@@ -39,11 +39,11 @@ export interface UserModel {
   id?: number;
   name: string;
   email: string;
-  password: string;
+  digest: string;
 }
 
 export interface SessionModel {
-  id: string;
+  token: string;
   userId: number;
   date: Date;
 }
