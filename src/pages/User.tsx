@@ -5,10 +5,10 @@ import { service } from "../Service";
 
 // ユーザ情報を表示
 const User: Component = () => {
-  const sessionToken = () => Cookies.get("SESSION_TOKEN");
+  const token = () => Cookies.get("SESSION_TOKEN");
   const [user] = createResource(
-    sessionToken,
-    async (sessionToken) => await service.getUser(sessionToken)
+    token,
+    async (token) => await service.getUser(token)
   );
 
   return (

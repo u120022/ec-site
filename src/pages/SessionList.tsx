@@ -80,7 +80,7 @@ const SessionCard: Component<{
   session: () => SessionModel;
   deleteSession: (token: string) => Promise<void>;
 }> = (props) => {
-  const sessionToken = () => Cookies.get("SESSION_TOKEN");
+  const token = () => Cookies.get("SESSION_TOKEN");
 
   // セッションを削除する
   const deleteSession = async () => {
@@ -92,7 +92,7 @@ const SessionCard: Component<{
       <div>ログイン: {props.session().date.toLocaleString()}</div>
 
       <Show
-        when={props.session().token != sessionToken()}
+        when={props.session().token != token()}
         fallback={<div class="text-slate-600">現在のセッション</div>}
       >
         <button class="text-rose-600" onClick={deleteSession}>

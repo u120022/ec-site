@@ -2,31 +2,31 @@ import { A, useNavigate } from "@solidjs/router";
 import { Component, createSignal } from "solid-js";
 import { service } from "../Service";
 import Cookie from "js-cookie";
-import { createForm } from "./form/Validation";
+import { createStore } from "solid-js/store";
+
+interface LoginFormModel {
+  email: string;
+  password: string;
+}
 
 // ユーザーのログインフォーム
 const Login: Component = () => {
-  const form = createForm();
+  const [form, setForm] = createStore<LoginFormModel>({
+    email: "",
+    password: "",
+  });
   const [formError, setFormError] = createSignal("");
 
-  // セッションの生成
   const navigate = useNavigate();
   const login = async () => {
-    // バリデーションチェック
-    if (!form.validate()) return;
+    const token = await service.login(form.email, form.password);
 
-    const sessionToken = await service.login(
-      form.fields.email,
-      form.fields.password
-    );
-
-    // ログインが失敗した場合
-    if (!sessionToken) {
+    if (!token) {
       setFormError("ログインに失敗しました。");
       return;
     }
 
-    Cookie.set("SESSION_TOKEN", sessionToken);
+    Cookie.set("SESSION_TOKEN", token);
     navigate("/", { replace: true });
   };
 
@@ -34,12 +34,7 @@ const Login: Component = () => {
     <div class="flex min-h-[100vh] min-w-[1024px]">
       <div class="mx-auto flex basis-1/3 flex-col">
         <div class="my-auto rounded border border-slate-300 p-12">
-          <form
-            class="flex flex-col gap-6"
-            method="dialog"
-            novalidate
-            onSubmit={login}
-          >
+          <form class="flex flex-col gap-6" method="dialog" onSubmit={login}>
             <div>
               <div class="text-3xl font-bold">ログイン</div>
               <span class="text-rose-600">{formError()}</span>
@@ -48,25 +43,23 @@ const Login: Component = () => {
             <div>
               <label>メールアドレス</label>
               <input
-                name="email"
                 type="email"
                 class="w-full rounded border border-slate-300 p-2"
                 required
-                ref={form.register}
+                value={form.email}
+                onInput={(e) => setForm({ email: e.currentTarget.value })}
               />
-              <span class="text-rose-600">{form.errors.email}</span>
             </div>
 
             <div>
               <label>パスワード</label>
               <input
-                name="password"
                 type="password"
                 class="w-full rounded border border-slate-300 p-2"
                 required
-                ref={form.register}
+                value={form.password}
+                onInput={(e) => setForm({ password: e.currentTarget.value })}
               />
-              <span class="text-rose-600">{form.errors.password}</span>
             </div>
 
             <input

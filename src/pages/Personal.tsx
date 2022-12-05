@@ -4,14 +4,12 @@ import { Component } from "solid-js";
 import { service } from "../Service";
 
 const Personal: Component = () => {
-  const sessionToken = () => Cookies.get("SESSION_TOKEN");
+  const token = () => Cookies.get("SESSION_TOKEN");
 
   const navigate = useNavigate();
   const logout = async () => {
-    // 現在のセッションを削除
-    await service.deleteSession(sessionToken());
+    await service.deleteSession(token());
 
-    // Cookieからトークンを削除する
     Cookies.remove("SESSION_TOKEN");
     navigate("/", { replace: true });
   };

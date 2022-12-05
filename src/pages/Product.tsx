@@ -1,7 +1,7 @@
 import { useParams } from "@solidjs/router";
 import { Component, createResource, createSignal, Index, Show } from "solid-js";
+import { createStore } from "solid-js/store";
 import { service } from "../Service";
-import { createForm } from "./form/Validation";
 import PagenateBar from "./PagenateBar";
 
 // 商品の詳細を表示
@@ -73,6 +73,10 @@ const Product: Component = () => {
 // 1ページに表示するコメントの数
 const COUNT_PER_PAGE = 10;
 
+interface CommentFormModel {
+  body: string;
+}
+
 // 1種類の商品のコメント一覧をリスト表示
 const CommentList: Component<{
   productId: () => number;
@@ -95,16 +99,14 @@ const CommentList: Component<{
   );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
-  // コメントの投稿
-  const form = createForm();
+  // コメントのフォーム
+  const [form, setForm] = createStore<CommentFormModel>({ body: "" });
   const createComment = async () => {
-    if (!form.validate()) return;
-
-    await service.createComment(props.productId(), form.fields.body);
+    await service.createComment(props.productId(), form.body);
     await refetchComments();
     await refetchCount();
 
-    form.clear();
+    setForm({ body: "" });
   };
 
   return (
@@ -129,12 +131,7 @@ const CommentList: Component<{
       </Show>
 
       <div class="rounded border border-slate-300 p-3">
-        <form
-          class="space-y-3"
-          method="dialog"
-          novalidate
-          onSubmit={createComment}
-        >
+        <form class="space-y-3" method="dialog" onSubmit={createComment}>
           <div class="">コメントを投稿する</div>
 
           <div>
@@ -145,9 +142,9 @@ const CommentList: Component<{
               minlength={16}
               placeholder="テキストを入力。"
               class="w-full resize-none rounded border border-slate-300 p-2"
-              ref={form.register}
+              value={form.body}
+              onInput={(e) => setForm({ body: e.currentTarget.value })}
             />
-            <span class="text-rose-600">{form.errors.body}</span>
           </div>
 
           <input
