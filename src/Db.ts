@@ -2,7 +2,7 @@ import Dexie, { Table } from "dexie";
 import { populate } from "./DbDemo";
 import {
   AddressModel,
-  CardModel,
+  PaymentModel,
   CartItemModel,
   CommentModel,
   ProductModel,
@@ -20,7 +20,7 @@ export class Db extends Dexie {
   receiptItems!: Table<ReceiptItemModel>;
   users!: Table<UserModel>;
   addresses!: Table<AddressModel>;
-  cards!: Table<CardModel>;
+  payments!: Table<PaymentModel>;
   sessions!: Table<SessionModel>;
 
   constructor() {
@@ -34,7 +34,7 @@ export class Db extends Dexie {
       receiptItems: "++id, receiptId, productId",
       users: "++id, &email",
       addresses: "++id, userId",
-      cards: "++id, userId",
+      payments: "++id, userId",
       sessions: "&token, userId",
     });
   }

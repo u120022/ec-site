@@ -295,10 +295,125 @@ export class Service {
   }
 
   // セッション一覧を取得
-  async getSessions(token: string) {
-    const session = await db.sessions.get(token);
-    const userId = session.userId;
-    return await db.sessions.where({ userId }).toArray();
+  async getSessions(token: string, page: number, count: number) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.sessions
+      .where({ userId: user.id })
+      .offset(page * count)
+      .limit(count)
+      .toArray();
+  }
+  // セッションの数を所得
+  async getSessionCount(token: string) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.sessions.where({ userId: user.id }).count();
+  }
+
+  // 住所の一覧を取得
+  async getAddresses(token: string, page: number, count: number) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.addresses
+      .where({ userId: user.id })
+      .offset(page * count)
+      .limit(count)
+      .toArray();
+  }
+
+  // 住所の数を取得
+  async getAddressCount(token: string) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.addresses.where({ userId: user.id }).count();
+  }
+
+  // 住所を削除
+  async deleteAddress(token: string, id: number) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    const address = await db.addresses.get(id);
+
+    if (!address) return undefined;
+    if (address.userId != user.id) return undefined;
+
+    await db.addresses.delete(address.id);
+  }
+
+  // 住所を作成
+  async createAddress(
+    token: string,
+    address: { name: string; country: string; address: string; zipcode: string }
+  ) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    await db.addresses.add({ ...address, userId: user.id });
+  }
+
+  // 支払い方法の一覧を取得
+  async getPayments(token: string, page: number, count: number) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.payments
+      .where({ userId: user.id })
+      .offset(page * count)
+      .limit(count)
+      .toArray();
+  }
+
+  // 支払い方法の数を取得
+  async getPaymentCount(token: string) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    return await db.payments.where({ userId: user.id }).count();
+  }
+
+  // 支払い方法を削除
+  async deletePayment(token: string, id: number) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    const payment = await db.payments.get(id);
+
+    if (!payment) return undefined;
+    if (payment.userId != user.id) return undefined;
+
+    await db.payments.delete(payment.id);
+  }
+
+  // 支払い方法を作成
+  async createPayment(
+    token: string,
+    payment: {
+      cardNumber: string;
+      holderName: string;
+      expirationDate: string;
+      securityCode: string;
+    }
+  ) {
+    const user = await this.getUser(token);
+
+    if (!user) return undefined;
+
+    await db.payments.add({ ...payment, userId: user.id });
   }
 }
 

@@ -57,7 +57,7 @@ export interface AddressModel {
   zipcode: string;
 }
 
-export interface CardModel {
+export interface PaymentModel {
   id?: number;
   userId: number;
   cardNumber: string;

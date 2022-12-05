@@ -1,24 +1,43 @@
+import { useSearchParams } from "@solidjs/router";
 import Cookies from "js-cookie";
 import { Component, createResource, Index, Show } from "solid-js";
 import { SessionModel } from "../Models";
 import { service } from "../Service";
+import PagenateBar from "./PagenateBar";
+
+const COUNT_PER_PAGE = 8;
 
 // セッション一覧を表示
 const SessionList: Component = () => {
-  const sessionToken = () => Cookies.get("SESSION_TOKEN");
+  // URLのパラメータを解析
+  const [params, setParams] = useSearchParams();
+  const page = () => parseInt(params.page) || 0;
+  const setPage = (page: number) => setParams({ ...params, page });
+
+  // セッションを取得
+  const token = () => Cookies.get("SESSION_TOKEN");
   const [sessions, { refetch: refetchSession }] = createResource(
-    sessionToken,
-    async (sessionToken) => await service.getSessions(sessionToken)
+    () => ({ token: token(), page: page() }),
+    async ({ token, page }) =>
+      await service.getSessions(token, page, COUNT_PER_PAGE)
   );
 
   // セッションの削除
-  const deleteSession = async (token: string) => {
+  const deleteSession = async (_token: string) => {
     // 現在のセッションは削除しない
-    if (token == sessionToken()) return;
+    if (_token == token()) return;
 
-    await service.deleteSession(token);
+    await service.deleteSession(_token);
     await refetchSession();
+    await refetchCount();
   };
+
+  // ページ数を計算
+  const [count, { refetch: refetchCount }] = createResource(
+    token,
+    async (token) => await service.getSessionCount(token)
+  );
+  const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
   return (
     <div class="space-y-3">
@@ -41,6 +60,16 @@ const SessionList: Component = () => {
             {(x) => <SessionCard session={x} deleteSession={deleteSession} />}
           </Index>
         </div>
+
+        <Show when={1 < maxPageCount()}>
+          <div class="p-3 text-center">
+            <PagenateBar
+              page={page}
+              setPage={setPage}
+              maxPageCount={maxPageCount}
+            />
+          </div>
+        </Show>
       </Show>
     </div>
   );
