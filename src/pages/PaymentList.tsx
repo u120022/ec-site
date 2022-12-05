@@ -1,10 +1,10 @@
 import { useSearchParams } from "@solidjs/router";
-import Cookies from "js-cookie";
 import { Component, createResource, Index, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import PaymentForm from "../forms/PaymentForm";
 import { PaymentModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useToken } from "./TokenContext";
 
 const COUNT_PER_PAGE = 8;
 
@@ -15,45 +15,23 @@ const PaymentList: Component = () => {
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ ...params, page });
 
-  // 支払い方法一覧を取得
-  const token = () => Cookies.get("SESSION_TOKEN");
+  const [token] = useToken();
+
   const [payments, { refetch: refetchPayments }] = createResource(
     () => ({ token: token(), page: page() }),
     async ({ token, page }) =>
       await service.getPayments(token, page, COUNT_PER_PAGE)
   );
 
-  const [form, setForm] = createStore({
-    cardNumber: "",
-    holderName: "",
-    expirationDate: "",
-    securityCode: "",
-  });
-
-  // 支払い方法を作成
-  const createPayment = async () => {
-    const payment = {
-      cardNumber: form.cardNumber,
-      holderName: form.holderName,
-      expirationDate: form.expirationDate,
-      securityCode: form.securityCode,
-    };
-    await service.createPayment(token(), payment);
+  // 表示を更新
+  const refetch = async () => {
     await refetchPayments();
     await refetchCount();
-    setForm({
-      cardNumber: "",
-      holderName: "",
-      expirationDate: "",
-      securityCode: "",
-    });
   };
 
-  // 支払い方法を削除
   const deletePayment = async (id: number) => {
     await service.deletePayment(token(), id);
-    await refetchPayments();
-    await refetchCount();
+    refetch();
   };
 
   // ページ数を計算
@@ -77,60 +55,7 @@ const PaymentList: Component = () => {
       </Show>
 
       <div class="rounded border border-slate-300 p-3">
-        <form class="space-y-3" method="dialog" onSubmit={createPayment}>
-          <div>支払い方法を追加する。(クレジット・デビットカード)</div>
-
-          <div>
-            <div>カード番号</div>
-            <input
-              type="text"
-              required
-              class="rounded border border-slate-300 p-2"
-              value={form.cardNumber}
-              onInput={(e) => setForm({ cardNumber: e.currentTarget.value })}
-            />
-          </div>
-
-          <div>
-            <div>カード名義</div>
-            <input
-              type="text"
-              required
-              class="rounded border border-slate-300 p-2"
-              value={form.holderName}
-              onInput={(e) => setForm({ holderName: e.currentTarget.value })}
-            />
-          </div>
-
-          <div>
-            <div>有効期間</div>
-            <input
-              type="text"
-              required
-              class="rounded border border-slate-300 p-2"
-              value={form.expirationDate}
-              onInput={(e) =>
-                setForm({ expirationDate: e.currentTarget.value })
-              }
-            />
-          </div>
-
-          <div>
-            <div>セキュリティコード(CVV/CSV)</div>
-            <input
-              type="text"
-              required
-              class="rounded border border-slate-300 p-2"
-              value={form.securityCode}
-              onInput={(e) => setForm({ securityCode: e.currentTarget.value })}
-            />
-          </div>
-
-          <input
-            type="submit"
-            class="rounded bg-blue-600 p-3 py-2 text-white"
-          />
-        </form>
+        <PaymentForm onSubmit={refetch} />
       </div>
 
       <Show when={1 < maxPageCount()}>

@@ -1,16 +1,15 @@
 import { A, Outlet, useNavigate } from "@solidjs/router";
-import Cookies from "js-cookie";
 import { Component } from "solid-js";
 import { service } from "../Service";
+import { useToken } from "./TokenContext";
 
 const Personal: Component = () => {
-  const token = () => Cookies.get("SESSION_TOKEN");
-
   const navigate = useNavigate();
+  const [token, setToken] = useToken();
+
   const logout = async () => {
     await service.deleteSession(token());
-
-    Cookies.remove("SESSION_TOKEN");
+    setToken("EMPTY");
     navigate("/", { replace: true });
   };
 

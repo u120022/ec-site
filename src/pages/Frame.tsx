@@ -1,11 +1,10 @@
 import { A, Outlet } from "@solidjs/router";
-import Cookies from "js-cookie";
 import { Component, createResource, Show } from "solid-js";
 import { service } from "../Service";
+import { useToken } from "./TokenContext";
 
 const Frame: Component = () => {
-  // ユーザ認証を行う
-  const token = () => Cookies.get("SESSION_TOKEN");
+  const [token] = useToken();
   const [user] = createResource(
     token,
     async (token) => await service.getUser(token)

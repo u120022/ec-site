@@ -10,6 +10,7 @@ export interface ProductModel {
 
 export interface CommentModel {
   id?: number;
+  userId: number;
   productId: number;
   body: string;
   date: Date;
@@ -17,18 +18,23 @@ export interface CommentModel {
 
 export interface CartItemModel {
   id?: number;
+  userId: number;
   productId: number;
   count: number;
 }
 
 export interface ReceiptModel {
   id?: number;
+  userId: number;
+  addressId: number;
+  paymentId: number;
   value: number;
   date: Date;
 }
 
 export interface ReceiptItemModel {
   id?: number;
+  userId: number;
   receiptId: number;
   productId: number;
   value: number;

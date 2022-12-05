@@ -3,11 +3,14 @@ import { Component, createResource, createSignal, Index, Show } from "solid-js";
 import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useToken } from "./TokenContext";
 
 // 商品の詳細を表示
 const Product: Component = () => {
   const params = useParams();
   const id = () => parseInt(params.id);
+
+  const [token] = useToken();
 
   // 商品の情報を取得
   // idが変更されると更新
@@ -15,12 +18,12 @@ const Product: Component = () => {
 
   // カート内商品の情報を取得
   const [cartItem, { refetch }] = createResource(id, async (id) =>
-    service.getCartItem(id)
+    service.getCartItem(token(), id)
   );
 
   // 商品を1つだけカートに入れる
   const pushToCart = async () => {
-    await service.pushToCart(id(), 1);
+    await service.pushToCart(token(), id(), 1);
     await refetch();
   };
 

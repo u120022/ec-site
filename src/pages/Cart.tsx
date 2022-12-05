@@ -3,6 +3,7 @@ import { Component, createResource, Index, Show } from "solid-js";
 import { CartItemModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useToken } from "./TokenContext";
 
 // 1ページに表示される数
 const COUNT_PER_PAGE = 8;
@@ -13,20 +14,24 @@ const Cart: Component = () => {
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ ...params, page });
 
+  const [token] = useToken();
+
   // カート内アイテムの総額を取得
   const [totalValue, { refetch: refetchTotalValue }] = createResource(
-    async () => await service.getTotalValueInCart()
+    token,
+    async (token) => await service.getTotalValueInCart(token)
   );
 
   // カート内アイテムを取得
   const [cartItems, { refetch: refetchCartItems }] = createResource(
-    page,
-    async (page) => await service.getCartItems(page, COUNT_PER_PAGE)
+    () => ({ token: token(), page: page() }),
+    async ({ token, page }) =>
+      await service.getCartItems(token, page, COUNT_PER_PAGE)
   );
 
   // カート内アイテムを削除
   const popFromCart = async (id: number, count: number) => {
-    await service.popFromCart(id, count);
+    await service.popFromCart(token(), id, count);
     await refetchTotalValue();
     await refetchCartItems();
     await refetchCount();
@@ -34,7 +39,7 @@ const Cart: Component = () => {
 
   // カート内アイテムを購入
   const purchaceInCart = async () => {
-    await service.purchaseInCart();
+    // await service.purchaseInCart();
     await refetchTotalValue();
     await refetchCartItems();
     await refetchCount();
@@ -42,7 +47,8 @@ const Cart: Component = () => {
 
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
-    async () => await service.getCartItemCount()
+    token,
+    async (token) => await service.getCartItemCount(token)
   );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 

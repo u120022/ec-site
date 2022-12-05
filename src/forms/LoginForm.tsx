@@ -3,9 +3,12 @@ import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { LoginFormModel } from "../FormModels";
 import { service } from "../Service";
-import Cookies from "js-cookie";
+import { useToken } from "../pages/TokenContext";
 
-const LoginForm: Component = () => {
+const LoginForm: Component<{
+  onSubmit?: () => void;
+}> = (props) => {
+  const [_, setToken] = useToken();
   const navigate = useNavigate();
 
   const [form, setForm] = createStore<LoginFormModel>({
@@ -22,8 +25,11 @@ const LoginForm: Component = () => {
       return;
     }
 
-    Cookies.set("SESSION_TOKEN", token);
+    setToken(token);
+
     navigate("/", { replace: true });
+
+    if (props.onSubmit) props.onSubmit();
   };
 
   return (

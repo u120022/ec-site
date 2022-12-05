@@ -21,18 +21,45 @@ export class Service {
   }
 
   // コメントを追加
-  async createComment(productId: number, body: string) {
-    // 文字列でないもしくは16文字以下の場合は終了
-    if (!body || body.length < 16) return;
+  async createComment(token: string, productId: number, body: string) {
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.comments,
+      async () => {
+        if (!body || body.length < 16) throw new Error();
 
-    const date = new Date();
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    await db.comments.add({ productId, body, date });
+        await db.comments.add({
+          userId: user.id as number,
+          productId,
+          body,
+          date: new Date(),
+        });
+      }
+    );
   }
 
   // コメントを削除
-  async deleteComment(id: number) {
-    await db.comments.delete(id);
+  async deleteComment(token: string, id: number) {
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.comments,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        const comment = await db.comments.get(id);
+        if (!comment || comment.userId != user.id) throw new Error();
+
+        await db.comments.delete(id);
+      }
+    );
   }
 
   // コメント一覧を取得
@@ -50,119 +77,188 @@ export class Service {
   }
 
   // 商品をカートに追加
-  async pushToCart(productId: number, count: number) {
-    await db.transaction("rw", db.cartItems, db.products, async () => {
-      const cartItem = await db.cartItems.get({ productId });
-      const product = await db.products.get(productId);
+  async pushToCart(token: string, productId: number, count: number) {
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.products,
+      db.cartItems,
+      async () => {
+        const product = await db.products.get(productId);
+        if (!product) throw new Error();
 
-      // 存在しない場合は追加して終了
-      if (!cartItem) {
-        // カート内在庫数が商品在庫数を上回らないようにする
-        if (count <= product.count) {
-          await db.cartItems.add({ productId, count });
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        const cartItem = await db.cartItems.get({
+          userId: user.id as number,
+          productId,
+        });
+
+        // 存在しない場合は追加して終了
+        if (!cartItem) {
+          // カート内在庫数が商品在庫数を上回らないようにする
+          if (product.count < count) throw new Error();
+          await db.cartItems.add({
+            userId: user.id as number,
+            productId,
+            count,
+          });
+          return;
         }
-        return;
-      }
 
-      cartItem.count += count;
-
-      // カート内在庫数が商品在庫数を上回らないようにする
-      if (cartItem.count <= product.count) {
-        await db.cartItems.update(cartItem.id, cartItem);
+        // カート内在庫数が商品在庫数を上回らないようにする
+        if (product.count < cartItem.count + count) throw new Error();
+        cartItem.count += count;
+        await db.cartItems.update(cartItem.id as number, cartItem);
       }
-    });
+    );
   }
 
   // 商品をカートから取り出す
-  async popFromCart(productId: number, count: number) {
-    await db.transaction("rw", db.cartItems, async () => {
-      const cartItem = await db.cartItems.get({ productId });
+  async popFromCart(token: string, productId: number, count: number) {
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.cartItems,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-      // 存在しない場合は直ちに終了
-      if (!cartItem) {
-        return;
+        const cartItem = await db.cartItems.get({
+          userId: user.id as number,
+          productId,
+        });
+        if (!cartItem) throw new Error();
+
+        // カート内在庫数が0になった場合は削除して終了
+        if (cartItem.count - count <= 0) {
+          db.cartItems.delete(cartItem.id as number);
+          return;
+        }
+
+        cartItem.count -= count;
+        await db.cartItems.update(cartItem.id as number, cartItem);
       }
-
-      // カート内在庫数が0になった場合は削除して終了
-      if (cartItem.count - count <= 0) {
-        db.cartItems.delete(cartItem.id);
-        return;
-      }
-
-      cartItem.count -= count;
-      await db.cartItems.update(cartItem.id, cartItem);
-    });
+    );
   }
 
   // カート内商品一覧を取得
-  async getCartItems(page: number, count: number) {
-    return await db.cartItems
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+  async getCartItems(token: string, page: number, count: number) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.cartItems, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        return await db.cartItems
+          .where({ userId: user.id as number })
+          .offset(page * count)
+          .limit(count)
+          .toArray();
+      })
+      .catch((_) => undefined);
   }
 
   // カート内商品を取得
-  async getCartItem(productId: number) {
-    return await db.cartItems.get({ productId });
+  async getCartItem(token: string, productId: number) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.cartItems, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        return await db.cartItems.get({ userId: user.id as number, productId });
+      })
+      .catch((_) => undefined);
   }
 
   // カート内商品の総数を取得
-  async getCartItemCount() {
-    return await db.cartItems.count();
+  async getCartItemCount(token: string) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.cartItems, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        return await db.cartItems.where({ userId: user.id as number }).count();
+      })
+      .catch((_) => undefined);
   }
 
   // カート内総数の合計金額を計算
-  async getTotalValueInCart() {
-    let value = 0;
-    await db.transaction("r", db.cartItems, db.products, async () => {
-      await db.cartItems.each(async (cartItem) => {
-        const product = await db.products.get(cartItem.productId);
-        value += product.value * cartItem.count;
-      });
-    });
-    return value;
+  async getTotalValueInCart(token: string) {
+    return await db
+      .transaction("r", db.products, db.cartItems, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        let value = 0;
+
+        await db.cartItems
+          .where({ userId: user.id as number })
+          .each(async (cartItem) => {
+            const product = await db.products.get(cartItem.productId);
+
+            if (!product) throw new Error();
+
+            value += product.value * cartItem.count;
+          });
+
+        return value;
+      })
+      .catch((_) => undefined);
   }
 
   // カート内商品を購入
-  async purchaseInCart() {
+  // TODO: 要修正
+  async purchaseInCart(token: string, addressId: number, paymentId: number) {
     await db.transaction(
       "rw",
-      db.cartItems,
-      db.products,
-      db.receipts,
-      db.receiptItems,
+      [
+        db.sessions,
+        db.users,
+        db.products,
+        db.cartItems,
+        db.receipts,
+        db.receiptItems,
+        db.addresses,
+        db.payments,
+      ],
       async () => {
-        // カートが空の場合は直ちに終了
-        if ((await db.cartItems.count()) == 0) return;
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-        // 整合性確認
-        // 無効な場合は直ちに終了 (TODO: 原因を出力)
-        await db.cartItems.each(async (cartItem) => {
-          const product = await db.products.get(cartItem.productId);
-          if (product.count < cartItem.count) {
-            return;
-          }
-        });
+        const address = await db.addresses.get({ userId: user.id as number });
+        if (!address || address.id != addressId) throw new Error();
+
+        const payment = await db.payments.get({ userId: user.id as number });
+        if (!payment || payment.id != paymentId) throw new Error();
+
+        const cartItems = db.cartItems.where({ userId: user.id as number });
+
+        // カートが空の場合
+        if ((await cartItems.count()) == 0) throw new Error();
 
         // レシートを発行
-        const date = new Date();
+        const value = await this.getTotalValueInCart(token);
+        if (!value) throw new Error();
 
-        // 合計金額の計算
-        let value = 0;
-        await db.cartItems.each(async (cartItem) => {
-          const product = await db.products.get(cartItem.productId);
-          value += product.value * cartItem.count;
-        });
-
-        const receiptId = (await db.receipts.add({ date, value })) as number;
+        const receiptId = (await db.receipts.add({
+          userId: user.id as number,
+          addressId,
+          paymentId,
+          date: new Date(),
+          value,
+        })) as number;
 
         // 購入商品の関連付けと在庫数の処理
-        await db.cartItems.each(async (cartItem) => {
+        await cartItems.each(async (cartItem) => {
           const product = await db.products.get(cartItem.productId);
+          if (!product || product.count < cartItem.count) throw new Error();
 
           // 購入商品をレシートに関連付ける
           await db.receiptItems.add({
+            userId: user.id as number,
             receiptId,
             productId: cartItem.productId,
             value: product.value,
@@ -171,40 +267,94 @@ export class Service {
 
           // 購入商品の在庫数を計算
           product.count -= cartItem.count;
-          db.products.update(product.id, product);
+          db.products.update(product.id as number, product);
         });
 
         // カートを空にする
-        await db.cartItems.clear();
+        await db.cartItems.where({ userId: user.id }).delete();
       }
     );
   }
 
   // レシート一覧を取得
-  async getReceipts(page: number, count: number) {
-    return await db.receipts
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+  async getReceipts(token: string, page: number, count: number) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.receipts, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        return await db.receipts
+          .where({ userId: user.id as number })
+          .offset(page * count)
+          .limit(count)
+          .toArray();
+      })
+      .catch((_) => undefined);
   }
 
   // レシートの総数を取得
-  async getReceiptCount() {
-    return await db.receipts.count();
+  async getReceiptCount(token: string) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.receipts, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
+
+        return await db.receipts.where({ userId: user.id }).count();
+      })
+      .catch((_) => undefined);
   }
 
   // 購入商品一覧を取得
-  async getReceiptItems(receiptId: number, page: number, count: number) {
-    return await db.receiptItems
-      .where({ receiptId })
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+  async getReceiptItems(
+    token: string,
+    receiptId: number,
+    page: number,
+    count: number
+  ) {
+    return await db
+      .transaction(
+        "r",
+        db.sessions,
+        db.users,
+        db.receipts,
+        db.receiptItems,
+        async () => {
+          const user = await this.getUser(token);
+          if (!user) throw new Error();
+
+          const receipt = await db.receipts.get(receiptId);
+          if (!receipt || receipt.userId != user.id) throw new Error();
+
+          return await db.receiptItems
+            .where({ receiptId })
+            .offset(page * count)
+            .limit(count)
+            .toArray();
+        }
+      )
+      .catch((_) => undefined);
   }
 
   // 購入商品の数を取得
-  async getReceiptItemCount(receiptId: number) {
-    return await db.receiptItems.where({ receiptId }).count();
+  async getReceiptItemCount(token: string, receiptId: number) {
+    return await db
+      .transaction(
+        "r",
+        db.sessions,
+        db.users,
+        db.receipts,
+        db.receiptItems,
+        async () => {
+          const user = await this.getUser(token);
+          if (!user) throw new Error();
+
+          const receipt = await db.receipts.get(receiptId);
+          if (!receipt || receipt.userId != user.id) throw new Error();
+
+          return await db.receiptItems.where({ receiptId }).count();
+        }
+      )
+      .catch((_) => undefined);
   }
 
   // ユーザの新規登録
@@ -231,9 +381,15 @@ export class Service {
 
   // ユーザの取得
   async getUser(token: string) {
-    if (!token) return undefined;
-    const session = await db.sessions.get(token);
-    return await db.users.get(session.userId);
+    return await db
+      .transaction("r", db.sessions, db.users, async () => {
+        const session = await db.sessions.get(token);
+
+        if (!session) throw new Error();
+
+        return await db.users.get(session.userId);
+      })
+      .catch((_) => undefined);
   }
 
   // ユーザ情報の変更
@@ -241,52 +397,62 @@ export class Service {
     token: string,
     params: { name?: string; email?: string; password?: string }
   ) {
-    const user = await this.getUser(token);
-    if (!user) return;
+    return await db.transaction("rw", db.sessions, db.users, async () => {
+      const user = await this.getUser(token);
+      if (!user) throw new Error();
 
-    // 氏名の変更
-    if (params.name) {
-      if (params.name.length == 0) return "INVALID";
-      user.name = params.name;
-    }
+      // 氏名の変更
+      if (params.name) {
+        if (params.name.length == 0) throw new Error();
+        user.name = params.name;
+      }
 
-    // メールの変更
-    if (params.email) {
-      if (params.email.length == 0) return "INVALID";
+      // メールの変更
+      if (params.email) {
+        if (params.email.length == 0) throw new Error();
 
-      const count = await db.users.where({ email: params.email }).count();
-      if (0 < count) return "EXISTED_EMAIL";
+        const count = await db.users.where({ email: params.email }).count();
+        if (0 < count) throw new Error();
 
-      user.email = params.email;
-    }
+        user.email = params.email;
+      }
 
-    // パスワードの変更
-    if (params.password) {
-      if (params.password.length == 0) return "INVALID";
+      // パスワードの変更
+      if (params.password) {
+        if (params.password.length == 0) throw new Error();
 
-      const digest = await genHashSHA256(params.password);
-      user.digest = digest;
-    }
+        const digest = await genHashSHA256(params.password);
+        user.digest = digest;
+      }
 
-    db.users.update(user.id, user);
-    return "SUCCESSFUL";
+      db.users.update(user.id as number, user);
+    });
   }
 
   // セッションの生成
   async login(email: string, password: string) {
-    // 該当するユーザが存在しない場合は直ちに終了
-    const user = await db.users.get({ email });
-    if (!user) return undefined;
-
-    // パスワードのダイジェスト値が異なる場合は直ちに終了
+    // ダイジェスト値を生成
     const digest = await genHashSHA256(password);
-    if (user.digest != digest) return undefined;
 
-    // (注意)トークンをUUIDv4として生成
-    const token = crypto.randomUUID();
-    const date = new Date();
-    await db.sessions.add({ token, userId: user.id, date });
-    return token;
+    return await db
+      .transaction("rw", db.sessions, db.users, async () => {
+        // 該当するユーザが存在しない場合は終了
+        const user = await db.users.get({ email });
+        if (!user) throw new Error();
+
+        // パスワードのダイジェスト値が異なる場合は終了
+        if (user.digest != digest) throw new Error();
+
+        // (注意)トークンをUUIDv4として生成
+        const token = crypto.randomUUID();
+        await db.sessions.add({
+          token,
+          userId: user.id as number,
+          date: new Date(),
+        });
+        return token;
+      })
+      .catch((_) => undefined);
   }
 
   // セッションの削除
@@ -296,59 +462,74 @@ export class Service {
 
   // セッション一覧を取得
   async getSessions(token: string, page: number, count: number) {
-    const user = await this.getUser(token);
+    return await db
+      .transaction("r", db.sessions, db.users, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    return await db.sessions
-      .where({ userId: user.id })
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+        return await db.sessions
+          .where({ userId: user.id })
+          .offset(page * count)
+          .limit(count)
+          .toArray();
+      })
+      .catch((_) => undefined);
   }
   // セッションの数を所得
   async getSessionCount(token: string) {
-    const user = await this.getUser(token);
+    return await db.transaction("r", db.sessions, db.users, async () => {
+      const user = await this.getUser(token);
+      if (!user) return undefined;
 
-    if (!user) return undefined;
-
-    return await db.sessions.where({ userId: user.id }).count();
+      return await db.sessions.where({ userId: user.id }).count();
+    });
   }
 
   // 住所の一覧を取得
   async getAddresses(token: string, page: number, count: number) {
-    const user = await this.getUser(token);
+    return await db
+      .transaction("r", db.sessions, db.users, db.addresses, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    return await db.addresses
-      .where({ userId: user.id })
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+        return await db.addresses
+          .where({ userId: user.id })
+          .offset(page * count)
+          .limit(count)
+          .toArray();
+      })
+      .catch((_) => undefined);
   }
 
   // 住所の数を取得
   async getAddressCount(token: string) {
-    const user = await this.getUser(token);
+    return await db
+      .transaction("r", db.sessions, db.users, db.addresses, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    return await db.addresses.where({ userId: user.id }).count();
+        return await db.addresses.where({ userId: user.id }).count();
+      })
+      .catch((_) => undefined);
   }
 
   // 住所を削除
   async deleteAddress(token: string, id: number) {
-    const user = await this.getUser(token);
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.addresses,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
+        const address = await db.addresses.get(id);
+        if (!address || address.userId != user.id) return undefined;
 
-    const address = await db.addresses.get(id);
-
-    if (!address) return undefined;
-    if (address.userId != user.id) return undefined;
-
-    await db.addresses.delete(address.id);
+        await db.addresses.delete(address.id as number);
+      }
+    );
   }
 
   // 住所を作成
@@ -356,47 +537,65 @@ export class Service {
     token: string,
     address: { name: string; country: string; address: string; zipcode: string }
   ) {
-    const user = await this.getUser(token);
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.addresses,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    await db.addresses.add({ ...address, userId: user.id });
+        await db.addresses.add({ ...address, userId: user.id as number });
+      }
+    );
   }
 
   // 支払い方法の一覧を取得
   async getPayments(token: string, page: number, count: number) {
-    const user = await this.getUser(token);
+    return await db
+      .transaction("r", db.sessions, db.users, db.payments, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    return await db.payments
-      .where({ userId: user.id })
-      .offset(page * count)
-      .limit(count)
-      .toArray();
+        return await db.payments
+          .where({ userId: user.id })
+          .offset(page * count)
+          .limit(count)
+          .toArray();
+      })
+      .catch((_) => undefined);
   }
 
   // 支払い方法の数を取得
   async getPaymentCount(token: string) {
-    const user = await this.getUser(token);
+    return await db
+      .transaction("r", db.sessions, db.users, db.payments, async () => {
+        const user = await this.getUser(token);
+        if (!user) throw new Error();
 
-    if (!user) return undefined;
-
-    return await db.payments.where({ userId: user.id }).count();
+        return await db.payments.where({ userId: user.id }).count();
+      })
+      .catch((_) => undefined);
   }
 
   // 支払い方法を削除
   async deletePayment(token: string, id: number) {
-    const user = await this.getUser(token);
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.payments,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) return undefined;
 
-    if (!user) return undefined;
+        const payment = await db.payments.get(id);
+        if (!payment || payment.userId != user.id) throw new Error();
 
-    const payment = await db.payments.get(id);
-
-    if (!payment) return undefined;
-    if (payment.userId != user.id) return undefined;
-
-    await db.payments.delete(payment.id);
+        await db.payments.delete(payment.id as number);
+      }
+    );
   }
 
   // 支払い方法を作成
@@ -409,11 +608,18 @@ export class Service {
       securityCode: string;
     }
   ) {
-    const user = await this.getUser(token);
+    return await db.transaction(
+      "rw",
+      db.sessions,
+      db.users,
+      db.payments,
+      async () => {
+        const user = await this.getUser(token);
+        if (!user) return undefined;
 
-    if (!user) return undefined;
-
-    await db.payments.add({ ...payment, userId: user.id });
+        await db.payments.add({ ...payment, userId: user.id as number });
+      }
+    );
   }
 }
 

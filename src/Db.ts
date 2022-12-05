@@ -28,10 +28,10 @@ export class Db extends Dexie {
 
     this.version(1).stores({
       products: "++id",
-      comments: "++id, productId",
-      cartItems: "++id, &productId",
-      receipts: "++id",
-      receiptItems: "++id, receiptId, productId",
+      comments: "++id, userId, productId",
+      cartItems: "++id, userId, productId, [userId+productId]",
+      receipts: "++id, userId",
+      receiptItems: "++id, userId, receiptId, productId",
       users: "++id, &email",
       addresses: "++id, userId",
       payments: "++id, userId",

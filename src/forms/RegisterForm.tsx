@@ -4,7 +4,9 @@ import { createStore } from "solid-js/store";
 import { RegisterFormModel } from "../FormModels";
 import { service } from "../Service";
 
-const RegisterForm: Component = () => {
+const RegisterForm: Component<{
+  onSubmit?: () => void;
+}> = (props) => {
   const navigate = useNavigate();
 
   const [form, setForm] = createStore<RegisterFormModel>({
@@ -37,7 +39,9 @@ const RegisterForm: Component = () => {
       return;
     }
 
-    navigate("/register_successful", { replace: true });
+    navigate("/login", { replace: true });
+
+    if (props.onSubmit) props.onSubmit();
   };
 
   return (

@@ -10,6 +10,7 @@ import {
 import { ReceiptItemModel, ReceiptModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useToken } from "./TokenContext";
 
 // 1ページに表示する購入履歴の数
 const COUNT_PER_PAGE = 8;
@@ -20,14 +21,20 @@ const ReceiptList: Component = () => {
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ ...params, page });
 
+  const [token] = useToken();
+
   // レシート一覧を取得
   const [receipts] = createResource(
-    page,
-    async (page) => await service.getReceipts(page, COUNT_PER_PAGE)
+    () => ({ token: token(), page: page() }),
+    async ({ token, page }) =>
+      await service.getReceipts(token, page, COUNT_PER_PAGE)
   );
 
   // 総ページ数を計算
-  const [count] = createResource(async () => await service.getReceiptCount());
+  const [count] = createResource(
+    token,
+    async (token) => await service.getReceiptCount(token)
+  );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
   return (
@@ -62,18 +69,19 @@ const Receipt: Component<{
   receipt: () => ReceiptModel;
 }> = (props) => {
   const [page, setPage] = createSignal(0);
+  const [token] = useToken();
 
   // 1回の購入の購入商品一覧を取得
   const [receiptItems] = createResource(
-    () => ({ id: props.receipt().id, page: page() }),
-    async ({ id, page }) =>
-      await service.getReceiptItems(id, page, COUNT_PER_PAGE)
+    () => ({ token: token(), id: props.receipt().id, page: page() }),
+    async ({ token, id, page }) =>
+      await service.getReceiptItems(token, id, page, COUNT_PER_PAGE)
   );
 
   // 1回の購入の購入商品の数を取得
   const [count] = createResource(
-    () => props.receipt().id,
-    async (id) => await service.getReceiptItemCount(id)
+    () => ({ token: token(), id: props.receipt().id }),
+    async ({ token, id }) => await service.getReceiptItemCount(token, id)
   );
   const maxPageCount = createMemo(() => Math.ceil(count() / COUNT_PER_PAGE));
 

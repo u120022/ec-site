@@ -1,17 +1,19 @@
-import Cookies from "js-cookie";
 import { Component, createResource, createSignal, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { UserPasswordFormModel } from "../FormModels";
+import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
-const UserNameForm: Component = () => {
+const UserNameForm: Component<{
+  onSubmit?: () => void;
+}> = (props) => {
   const [form, setForm] = createStore<UserPasswordFormModel>({
     password: "",
     confirmPassword: "",
   });
   const [formError, setFormError] = createSignal("");
 
-  const token = () => Cookies.get("SESSION_TOKEN");
+  const [token] = useToken();
   const [user] = createResource(
     token,
     async (token) => await service.getUser(token)
@@ -31,6 +33,10 @@ const UserNameForm: Component = () => {
       setFormError("パスワードの変更に失敗しました。");
       return;
     }
+
+    setForm({ password: "", confirmPassword: "" });
+
+    if (props.onSubmit) props.onSubmit();
   };
 
   return (

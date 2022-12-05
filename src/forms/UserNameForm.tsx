@@ -1,14 +1,16 @@
-import Cookies from "js-cookie";
 import { Component, createResource, createSignal, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { UserNameFormModel } from "../FormModels";
+import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
-const UserNameForm: Component = () => {
+const UserNameForm: Component<{
+  onSubmit?: () => void;
+}> = (props) => {
   const [form, setForm] = createStore<UserNameFormModel>({ name: "" });
   const [formError, setFormError] = createSignal("");
 
-  const token = () => Cookies.get("SESSION_TOKEN");
+  const [token] = useToken();
   const [user] = createResource(
     token,
     async (token) => await service.getUser(token)
@@ -23,6 +25,8 @@ const UserNameForm: Component = () => {
     }
 
     setForm({ name: "" });
+
+    if (props.onSubmit) props.onSubmit();
   };
 
   return (

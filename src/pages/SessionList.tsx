@@ -1,9 +1,9 @@
 import { useSearchParams } from "@solidjs/router";
-import Cookies from "js-cookie";
 import { Component, createResource, Index, Show } from "solid-js";
 import { SessionModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useToken } from "./TokenContext";
 
 const COUNT_PER_PAGE = 8;
 
@@ -14,8 +14,9 @@ const SessionList: Component = () => {
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ ...params, page });
 
+  const [token] = useToken();
+
   // セッションを取得
-  const token = () => Cookies.get("SESSION_TOKEN");
   const [sessions, { refetch: refetchSession }] = createResource(
     () => ({ token: token(), page: page() }),
     async ({ token, page }) =>
@@ -80,7 +81,7 @@ const SessionCard: Component<{
   session: () => SessionModel;
   deleteSession: (token: string) => Promise<void>;
 }> = (props) => {
-  const token = () => Cookies.get("SESSION_TOKEN");
+  const [token] = useToken();
 
   // セッションを削除する
   const deleteSession = async () => {

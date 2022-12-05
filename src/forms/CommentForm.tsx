@@ -1,6 +1,7 @@
 import { Component } from "solid-js";
 import { createStore } from "solid-js/store";
 import { CommentFormModel } from "../FormModels";
+import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const CommentForm: Component<{
@@ -8,13 +9,14 @@ const CommentForm: Component<{
   onSubmit?: () => void;
 }> = (props) => {
   const [form, setForm] = createStore<CommentFormModel>({ body: "" });
+  const [token] = useToken();
 
   const onSubmit = async () => {
-    await service.createComment(props.productId(), form.body);
+    await service.createComment(token(), props.productId(), form.body);
 
     setForm({ body: "" });
 
-    props.onSubmit();
+    if (props.onSubmit) props.onSubmit();
   };
 
   return (
