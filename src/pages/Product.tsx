@@ -1,6 +1,6 @@
 import { useParams } from "@solidjs/router";
 import { Component, createResource, createSignal, Index, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
 
@@ -73,10 +73,6 @@ const Product: Component = () => {
 // 1ページに表示するコメントの数
 const COUNT_PER_PAGE = 10;
 
-interface CommentFormModel {
-  body: string;
-}
-
 // 1種類の商品のコメント一覧をリスト表示
 const CommentList: Component<{
   productId: () => number;
@@ -99,14 +95,10 @@ const CommentList: Component<{
   );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
-  // コメントのフォーム
-  const [form, setForm] = createStore<CommentFormModel>({ body: "" });
-  const createComment = async () => {
-    await service.createComment(props.productId(), form.body);
+  // コメントの表示を更新する
+  const refetch = async () => {
     await refetchComments();
     await refetchCount();
-
-    setForm({ body: "" });
   };
 
   return (
@@ -131,27 +123,7 @@ const CommentList: Component<{
       </Show>
 
       <div class="rounded border border-slate-300 p-3">
-        <form class="space-y-3" method="dialog" onSubmit={createComment}>
-          <div class="">コメントを投稿する</div>
-
-          <div>
-            <textarea
-              name="body"
-              required
-              rows={8}
-              minlength={16}
-              placeholder="テキストを入力。"
-              class="w-full resize-none rounded border border-slate-300 p-2"
-              value={form.body}
-              onInput={(e) => setForm({ body: e.currentTarget.value })}
-            />
-          </div>
-
-          <input
-            type="submit"
-            class="rounded bg-blue-600 p-3 py-2 text-white"
-          />
-        </form>
+        <CommentForm productId={props.productId} onSubmit={refetch} />
       </div>
 
       <Show when={1 < maxPageCount()}>

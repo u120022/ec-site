@@ -63,7 +63,7 @@ const AddressList: Component = () => {
       <div class="text-2xl font-bold">住所</div>
 
       <Show
-        when={addresses()}
+        when={0 < count()}
         fallback={<div class="text-slate-600">住所が存在しません。</div>}
       >
         <Index each={addresses()}>

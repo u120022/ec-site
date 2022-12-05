@@ -68,7 +68,7 @@ const PaymentList: Component = () => {
       <div class="text-2xl font-bold">支払い方法</div>
 
       <Show
-        when={payments()}
+        when={0 < count()}
         fallback={<div class="text-slate-600">支払い方法が存在しません。</div>}
       >
         <Index each={payments()}>
