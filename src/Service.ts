@@ -1,10 +1,66 @@
 import { db } from "./Db";
 import { genHashSHA256 } from "./Hash";
+import { ProductModel } from "./Models";
+
+type StatusCode = "SUCCESSFUL" | "INVALID";
 
 export class Service {
   // 商品一覧を取得
-  async getProucts(page: number, count: number) {
-    return await db.products
+  async getProucts(page: number, count: number, params?: { search?: string, sortby?: string }) {
+
+		// 並びの順序の指定
+		let orderLabel = "name";
+		let descending = false;
+
+		switch (params?.sortby) {
+			case "name":
+				orderLabel = "name";
+				descending = false;
+				break;
+
+			case "name_des":
+				orderLabel = "name";
+				descending = true;
+				break;
+
+			case "date":
+				orderLabel = "date";
+				descending = false;
+				break;
+
+			case "date_des":
+				orderLabel = "date";
+				descending = true;
+				break;
+				
+			case "value":
+				orderLabel = "value";
+				descending = false;
+				break;
+
+			case "value_des":
+				orderLabel = "value";
+				descending = true;
+				break;
+		}
+
+    const query = db.products
+			.orderBy(orderLabel);
+
+		const orderQuery = descending ? query.reverse() : query;
+
+		// 検索フィルター
+		const searchFn = (x: ProductModel) => {
+			if (!params?.search) return true;
+
+			return x.name
+				.replace(" ", "")
+				.toLowerCase()
+				.includes(params.search.replace(" ", "").toLowerCase());
+		}
+
+		return await orderQuery
+			.filter(searchFn)
       .offset(page * count)
       .limit(count)
       .toArray();
@@ -40,7 +96,9 @@ export class Service {
           date: new Date(),
         });
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // コメントを削除
@@ -59,7 +117,9 @@ export class Service {
 
         await db.comments.delete(id);
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // コメント一覧を取得
@@ -113,7 +173,9 @@ export class Service {
         cartItem.count += count;
         await db.cartItems.update(cartItem.id as number, cartItem);
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // 商品をカートから取り出す
@@ -142,7 +204,9 @@ export class Service {
         cartItem.count -= count;
         await db.cartItems.update(cartItem.id as number, cartItem);
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // カート内商品一覧を取得
@@ -154,6 +218,7 @@ export class Service {
 
         return await db.cartItems
           .where({ userId: user.id as number })
+					.reverse()
           .offset(page * count)
           .limit(count)
           .toArray();
@@ -210,7 +275,6 @@ export class Service {
   }
 
   // カート内商品を購入
-  // TODO: 要修正
   async purchaseInCart(token: string, addressId: number, paymentId: number) {
     await db.transaction(
       "rw",
@@ -273,7 +337,9 @@ export class Service {
         // カートを空にする
         await db.cartItems.where({ userId: user.id }).delete();
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // レシート一覧を取得
@@ -285,6 +351,7 @@ export class Service {
 
         return await db.receipts
           .where({ userId: user.id as number })
+					.reverse()
           .offset(page * count)
           .limit(count)
           .toArray();
@@ -359,24 +426,21 @@ export class Service {
 
   // ユーザの新規登録
   async registerUser(name: string, email: string, password: string) {
-    // 名前が0文字の場合は直ちに終了
-    if (name.length == 0) return "INVALID";
+		return await db.transaction("rw", db.users, async () => {
+			if (name.length == 0) throw new Error();
+			if (email.length == 0) throw new Error();
+			if (password.length == 0) throw new Error();
 
-    // Eメールが0文字の場合は直ちに終了
-    if (email.length == 0) return "INVALID";
+			// 既に存在するメールの場合は終了
+			const count = await db.users.where({ email }).count();
+			if (0 < count) throw new Error();
 
-    // 既に存在するメールの場合は直ちに終了
-    const count = await db.users.where({ email }).count();
-    if (0 < count) return "EXISTED_EMAIL";
-
-    // パスワードが0文字の場合は直ちに終了
-    if (password.length == 0) return "INVALID";
-
-    // パスワードをダイジェスト値として保存
-    const digest = await genHashSHA256(password);
-
-    await db.users.add({ name, digest, email });
-    return "SUCCESSFUL";
+			// パスワードをダイジェスト値として保存
+			const digest = await genHashSHA256(password);
+			await db.users.add({ name, digest, email });
+		})
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // ユーザの取得
@@ -426,12 +490,15 @@ export class Service {
       }
 
       db.users.update(user.id as number, user);
-    });
+    })
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // セッションの生成
-  async login(email: string, password: string) {
+  async createSession(email: string, password: string) {
     // ダイジェスト値を生成
+		// transaction内で実行は不可能
     const digest = await genHashSHA256(password);
 
     return await db
@@ -452,12 +519,19 @@ export class Service {
         });
         return token;
       })
-      .catch((_) => undefined);
+				.catch(_ => undefined);
   }
 
   // セッションの削除
   async deleteSession(token: string) {
-    await db.sessions.delete(token);
+		return await db.transaction("rw", db.sessions, async () => {
+			const session = db.sessions.get(token);
+			if (!session) throw new Error();
+
+			await db.sessions.delete(token);
+		})
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // セッション一覧を取得
@@ -529,7 +603,9 @@ export class Service {
 
         await db.addresses.delete(address.id as number);
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // 住所を作成
@@ -548,7 +624,9 @@ export class Service {
 
         await db.addresses.add({ ...address, userId: user.id as number });
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // 支払い方法の一覧を取得
@@ -595,7 +673,9 @@ export class Service {
 
         await db.payments.delete(payment.id as number);
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 
   // 支払い方法を作成
@@ -619,7 +699,9 @@ export class Service {
 
         await db.payments.add({ ...payment, userId: user.id as number });
       }
-    );
+    )
+			.then<StatusCode>(_ => "SUCCESSFUL")
+			.catch<StatusCode>(_ => "INVALID");
   }
 }
 

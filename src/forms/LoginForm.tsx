@@ -18,7 +18,7 @@ const LoginForm: Component<{
   const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
-    const token = await service.login(form.email, form.password);
+    const token = await service.createSession(form.email, form.password);
 
     if (!token) {
       setFormError("ログインに失敗しました。");

@@ -12,12 +12,14 @@ const ProductList: Component = () => {
   const [params, setParams] = useSearchParams();
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ ...params, page });
+	const search = () => params.search;
+	const sortby = () => params.sortby;
 
   // 商品を取得
   // pageが変更されると更新
   const [products] = createResource(
-    page,
-    async (page) => await service.getProucts(page, COUNT_PER_PAGE)
+    () => ({ page: page(), search: search(), sortby: sortby() }),
+    async ({ page, search, sortby }) => await service.getProucts(page, COUNT_PER_PAGE, { search, sortby })
   );
 
   // ページ数を計算
@@ -28,10 +30,10 @@ const ProductList: Component = () => {
     <div class="flex gap-6">
       <div class="basis-1/5">
         <div class="space-y-3">
-          <div class="rounded bg-slate-100 p-3">ホーム</div>
-          <div class="rounded bg-slate-100 p-3">おすすめ</div>
-          <div class="rounded bg-slate-100 p-3">急上昇</div>
-          <div class="rounded bg-slate-100 p-3">セール中</div>
+          <div class="rounded bg-slate-100 p-3">売上順</div>
+          <div class="rounded bg-slate-100 p-3">価格順</div>
+          <div class="rounded bg-slate-100 p-3">販売日順</div>
+          <div class="rounded bg-slate-100 p-3">名前順</div>
         </div>
       </div>
 
