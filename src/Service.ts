@@ -6,60 +6,30 @@ type StatusCode = "SUCCESSFUL" | "INVALID";
 
 export class Service {
   // 商品一覧を取得
-  async getProucts(page: number, count: number, params?: { search?: string, sortby?: string }) {
+  async getProucts(page: number, count: number, params?: { search?: string, orderby?: string }) {
+		let query = db.products.orderBy("name");
 
 		// 並びの順序の指定
-		let orderLabel = "name";
-		let descending = false;
+		if (params?.orderby) {
+			const re = /(name|date|value)_(asc|des)/;
+			const match = re.exec(params?.orderby);
 
-		switch (params?.sortby) {
-			case "name":
-				orderLabel = "name";
-				descending = false;
-				break;
-
-			case "name_des":
-				orderLabel = "name";
-				descending = true;
-				break;
-
-			case "date":
-				orderLabel = "date";
-				descending = false;
-				break;
-
-			case "date_des":
-				orderLabel = "date";
-				descending = true;
-				break;
-				
-			case "value":
-				orderLabel = "value";
-				descending = false;
-				break;
-
-			case "value_des":
-				orderLabel = "value";
-				descending = true;
-				break;
+			if (match) {
+				query = db.products.orderBy(match[1]);
+				if (match[2] == "des") query = query.reverse();
+			}
 		}
-
-    const query = db.products
-			.orderBy(orderLabel);
-
-		const orderQuery = descending ? query.reverse() : query;
 
 		// 検索フィルター
 		const searchFn = (x: ProductModel) => {
 			if (!params?.search) return true;
-
 			return x.name
 				.replace(" ", "")
 				.toLowerCase()
 				.includes(params.search.replace(" ", "").toLowerCase());
-		}
+		};
 
-		return await orderQuery
+		return await query
 			.filter(searchFn)
       .offset(page * count)
       .limit(count)
@@ -67,8 +37,18 @@ export class Service {
   }
 
   // 商品数を取得
-  async getProductCount() {
-    return await db.products.count();
+  async getProductCount(params?: { search?: string }) {
+
+		// 検索フィルター
+		const searchFn = (x: ProductModel) => {
+			if (!params?.search) return true;
+			return x.name
+				.replace(" ", "")
+				.toLowerCase()
+				.includes(params.search.replace(" ", "").toLowerCase());
+		};
+
+    return await db.products.filter(searchFn).count();
   }
 
   // キーから商品を取得
