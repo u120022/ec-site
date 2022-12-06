@@ -1,14 +1,19 @@
-import { A, Outlet } from "@solidjs/router";
+import { A, Outlet, useSearchParams } from "@solidjs/router";
 import { Component, createResource, Show } from "solid-js";
 import { service } from "../Service";
 import { useToken } from "./TokenContext";
 
 const Frame: Component = () => {
+  const [params, setParams] = useSearchParams();
   const [token] = useToken();
   const [user] = createResource(
     token,
     async (token) => await service.getUser(token)
   );
+
+  const setSearchQuery = (search: string) => {
+    setParams({ search });
+  };
 
   return (
     <div class="flex min-h-[100vh] min-w-[1024px]  flex-col">
@@ -18,6 +23,13 @@ const Frame: Component = () => {
         </A>
 
         <div class="flex-grow"></div>
+
+        <input
+          placeholder="検索"
+          type="search"
+          class="rounded border border-slate-300 p-2"
+          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+        />
 
         <A class="p-3" href="/products">
           ストア

@@ -22,6 +22,10 @@ const ReceiptList: Component = () => {
   const setPage = (page: number) => setParams({ ...params, page });
 
   const [token] = useToken();
+  const [user] = createResource(
+    token,
+    async (token) => await service.getUser(token)
+  );
 
   // レシート一覧を取得
   const [receipts] = createResource(
@@ -42,22 +46,27 @@ const ReceiptList: Component = () => {
       <div class="text-2xl font-bold">購入履歴</div>
 
       <Show
-        when={0 < count()}
-        fallback={<div class="text-slate-600">購入履歴はありません。</div>}
+        when={user()}
+        fallback={<div class="text-slate-600">ログインしてません。</div>}
       >
-        <div class="space-y-3">
-          <Index each={receipts()}>{(x) => <Receipt receipt={x} />}</Index>
-        </div>
-      </Show>
+        <Show
+          when={0 < count()}
+          fallback={<div class="text-slate-600">購入履歴はありません。</div>}
+        >
+          <div class="space-y-3">
+            <Index each={receipts()}>{(x) => <Receipt receipt={x} />}</Index>
+          </div>
+        </Show>
 
-      <Show when={1 < maxPageCount()}>
-        <div class="p-3 text-center">
-          <PagenateBar
-            page={page}
-            setPage={setPage}
-            maxPageCount={maxPageCount}
-          />
-        </div>
+        <Show when={1 < maxPageCount()}>
+          <div class="p-3 text-center">
+            <PagenateBar
+              page={page}
+              setPage={setPage}
+              maxPageCount={maxPageCount}
+            />
+          </div>
+        </Show>
       </Show>
     </div>
   );

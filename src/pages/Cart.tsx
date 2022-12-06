@@ -15,6 +15,10 @@ const Cart: Component = () => {
   const setPage = (page: number) => setParams({ ...params, page });
 
   const [token] = useToken();
+  const [user] = createResource(
+    token,
+    async (token) => await service.getUser(token)
+  );
 
   // カート内アイテムの総額を取得
   const [totalValue, { refetch: refetchTotalValue }] = createResource(
@@ -57,44 +61,49 @@ const Cart: Component = () => {
       <div class="text-2xl font-bold">カート内</div>
 
       <Show
-        when={0 < count()}
-        fallback={
-          <div class="text-slate-600">カート内に商品はありません。</div>
-        }
+        when={user()}
+        fallback={<div class="text-slate-600">ログインしていません。</div>}
       >
-        <div class="space-y-3">
-          <Index each={cartItems()}>
-            {(x) => <CartItem cartItem={x} popFromCart={popFromCart} />}
-          </Index>
-        </div>
-
-        <Show when={1 < maxPageCount()}>
-          <div class="p-3 text-center">
-            <PagenateBar
-              page={page}
-              setPage={setPage}
-              maxPageCount={maxPageCount}
-            />
+        <Show
+          when={0 < count()}
+          fallback={
+            <div class="text-slate-600">カート内に商品はありません。</div>
+          }
+        >
+          <div class="space-y-3">
+            <Index each={cartItems()}>
+              {(x) => <CartItem cartItem={x} popFromCart={popFromCart} />}
+            </Index>
           </div>
-        </Show>
 
-        <Show when={totalValue()}>
-          <div class="flex justify-between">
-            <div class="text-xl font-bold">合計金額</div>
-            <div class="text-xl text-rose-600">
-              &yen {totalValue().toLocaleString()}
+          <Show when={1 < maxPageCount()}>
+            <div class="p-3 text-center">
+              <PagenateBar
+                page={page}
+                setPage={setPage}
+                maxPageCount={maxPageCount}
+              />
             </div>
+          </Show>
+
+          <Show when={totalValue()}>
+            <div class="flex justify-between">
+              <div class="text-xl font-bold">合計金額</div>
+              <div class="text-xl text-rose-600">
+                &yen {totalValue().toLocaleString()}
+              </div>
+            </div>
+          </Show>
+
+          <div class="justify-between text-center">
+            <button
+              onClick={purchaceInCart}
+              class="rounded bg-blue-600 p-3 text-white"
+            >
+              購入手続き
+            </button>
           </div>
         </Show>
-
-        <div class="justify-between text-center">
-          <button
-            onClick={purchaceInCart}
-            class="rounded bg-blue-600 p-3 text-white"
-          >
-            購入手続き
-          </button>
-        </div>
       </Show>
     </div>
   );

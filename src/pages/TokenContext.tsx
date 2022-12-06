@@ -9,6 +9,7 @@ import {
   useContext,
 } from "solid-js";
 
+// 要修正
 const tokenContext = createContext<
   [token: Accessor<string>, setToken: Setter<string>]
 >(createSignal(Cookies.get("SESSION_TOKEN") || "EMPTY"));

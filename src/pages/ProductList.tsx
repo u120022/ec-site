@@ -12,30 +12,65 @@ const ProductList: Component = () => {
   const [params, setParams] = useSearchParams();
   const page = () => parseInt(params.page) || 0;
   const setPage = (page: number) => setParams({ page });
-	const search = () => params.search;
-	const orderby = () => params.orderby;
+  const orderby = () => params.orderby;
+  const setOrderBy = (orderby: string) => setParams({ orderby });
+  const search = () => params.search;
 
   // 商品を取得
   // pageが変更されると更新
   const [products] = createResource(
     () => ({ page: page(), search: search(), orderby: orderby() }),
-    async ({ page, search, orderby }) => await service.getProucts(page, COUNT_PER_PAGE, { search, orderby })
+    async ({ page, search, orderby }) =>
+      await service.getProucts(page, COUNT_PER_PAGE, { search, orderby })
   );
 
   // ページ数を計算
   const [count] = createResource(
-		search,
-		async (search) => await service.getProductCount({ search })
-	);
+    search,
+    async (search) => await service.getProductCount({ search })
+  );
   const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
 
   return (
     <div class="flex gap-6">
       <div class="basis-1/5">
         <div class="space-y-3">
-          <div class="rounded bg-slate-100 p-3" onClick={_ => setParams({ orderby: "value_asc" })}>価格順</div>
-          <div class="rounded bg-slate-100 p-3" onClick={_ => setParams({ orderby: "date_asc" })}>販売日順</div>
-          <div class="rounded bg-slate-100 p-3" onClick={_ => setParams({ orderby: "name_asc" })}>名前順</div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("value_asc")}
+          >
+            価格順(昇順)
+          </div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("value_des")}
+          >
+            価格順(後順)
+          </div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("date_asc")}
+          >
+            販売日順(昇順)
+          </div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("date_des")}
+          >
+            販売日順(降順)
+          </div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("name_asc")}
+          >
+            名前順(昇順)
+          </div>
+          <div
+            class="rounded bg-slate-100 p-3"
+            onClick={(_) => setOrderBy("name_des")}
+          >
+            名前順(降順)
+          </div>
         </div>
       </div>
 
