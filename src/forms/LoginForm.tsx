@@ -8,8 +8,9 @@ import { useToken } from "../pages/TokenContext";
 const LoginForm: Component<{
   onSubmit?: () => void;
 }> = (props) => {
-  const [_, setToken] = useToken();
   const navigate = useNavigate();
+
+  const [token, setToken] = useToken();
 
   const [form, setForm] = createStore<LoginFormModel>({
     email: "",

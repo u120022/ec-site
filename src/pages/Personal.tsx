@@ -9,7 +9,7 @@ const Personal: Component = () => {
 
   const logout = async () => {
     await service.deleteSession(token());
-    setToken("EMPTY");
+    setToken(undefined);
     navigate("/", { replace: true });
   };
 
@@ -20,13 +20,13 @@ const Personal: Component = () => {
           <A href="/personal/user" class="rounded bg-slate-100 p-3">
             ユーザ情報の表示・編集
           </A>
-          <A href="/personal/address" class="rounded bg-slate-100 p-3">
+          <A href="/personal/addresses" class="rounded bg-slate-100 p-3">
             住所の表示・編集
           </A>
-          <A href="/personal/payment" class="rounded bg-slate-100 p-3">
+          <A href="/personal/payments" class="rounded bg-slate-100 p-3">
             支払い方法の表示・編集
           </A>
-          <A href="/personal/session" class="rounded bg-slate-100 p-3">
+          <A href="/personal/sessions" class="rounded bg-slate-100 p-3">
             セッションの表示・編集
           </A>
           <A href="#" class="rounded bg-slate-100 p-3" onClick={logout}>

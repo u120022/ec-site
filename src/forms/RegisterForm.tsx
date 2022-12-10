@@ -29,11 +29,6 @@ const RegisterForm: Component<{
       form.password
     );
 
-    if (status == "EXISTED_EMAIL") {
-      setFormError("既に存在するメールアドレスです。");
-      return;
-    }
-
     if (status != "SUCCESSFUL") {
       setFormError("新規登録に失敗しました。");
       return;

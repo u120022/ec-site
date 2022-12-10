@@ -6,14 +6,14 @@ import { service } from "../Service";
 const PaymentForm: Component<{
   onSubmit?: () => void;
 }> = (props) => {
+  const [token] = useToken();
+
   const [form, setForm] = createStore({
     cardNumber: "",
     holderName: "",
     expirationDate: "",
     securityCode: "",
   });
-
-  const [token] = useToken();
 
   // 支払い方法を作成
   const onSubmit = async () => {

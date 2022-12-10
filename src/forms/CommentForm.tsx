@@ -5,14 +5,15 @@ import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const CommentForm: Component<{
-  productId: () => number;
+  productId: number;
   onSubmit?: () => void;
 }> = (props) => {
-  const [form, setForm] = createStore<CommentFormModel>({ body: "" });
   const [token] = useToken();
 
+  const [form, setForm] = createStore<CommentFormModel>({ body: "" });
+
   const onSubmit = async () => {
-    await service.createComment(token(), props.productId(), form.body);
+    await service.createComment(token(), props.productId, form.body);
 
     setForm({ body: "" });
 

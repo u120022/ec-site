@@ -1,35 +1,33 @@
-import { A, useSearchParams } from "@solidjs/router";
-import { Component, createResource, Index, Show } from "solid-js";
-import { ProductModel } from "../Models";
+import { A } from "@solidjs/router";
+import { Component, createResource, For } from "solid-js";
+import { ProductDto } from "../Dto";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
+import { useSearchParamInt, useSearchParam, calcMaxPageCount } from "./Utils";
 
 // 1ページに表示する商品の数
 const COUNT_PER_PAGE = 8;
 
 // 商品の一覧をグリッド表示
 const ProductList: Component = () => {
-  const [params, setParams] = useSearchParams();
-  const page = () => parseInt(params.page) || 0;
-  const setPage = (page: number) => setParams({ page });
-  const orderby = () => params.orderby;
-  const setOrderBy = (orderby: string) => setParams({ orderby });
-  const search = () => params.search;
+  const [page, setPage] = useSearchParamInt("page", 0);
+  const [orderBy, setOrderBy] = useSearchParam("order_by", "name");
+  const [filter, setFilter] = useSearchParam("filter", undefined);
 
   // 商品を取得
   // pageが変更されると更新
   const [products] = createResource(
-    () => ({ page: page(), search: search(), orderby: orderby() }),
-    async ({ page, search, orderby }) =>
-      await service.getProucts(page, COUNT_PER_PAGE, { search, orderby })
+    () => ({ page: page(), filter: filter(), orderBy: orderBy() }),
+    async ({ page, filter, orderBy }) =>
+      await service.getProucts(page, COUNT_PER_PAGE, { filter, orderBy })
   );
 
   // ページ数を計算
   const [count] = createResource(
-    search,
-    async (search) => await service.getProductCount({ search })
+    () => ({ filter: filter() }),
+    async ({ filter }) => await service.getProductCount({ filter })
   );
-  const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
+  const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
   return (
     <div class="flex gap-6">
@@ -76,18 +74,16 @@ const ProductList: Component = () => {
 
       <div class="flex-grow space-y-6">
         <div class="grid grid-cols-4 gap-3">
-          <Index each={products()}>{(x) => <ProductCard product={x} />}</Index>
+          <For each={products()}>{(x) => <ProductCard product={x} />}</For>
         </div>
 
-        <Show when={1 < maxPageCount()}>
-          <div class="p-3 text-center">
-            <PagenateBar
-              page={page}
-              setPage={setPage}
-              maxPageCount={maxPageCount}
-            />
-          </div>
-        </Show>
+        <div class="p-3 text-center">
+          <PagenateBar
+            page={page()}
+            onSetPage={setPage}
+            maxPageCount={maxPageCount()}
+          />
+        </div>
       </div>
     </div>
   );
@@ -95,19 +91,19 @@ const ProductList: Component = () => {
 
 // 商品のグリッド項目
 const ProductCard: Component<{
-  product: () => ProductModel;
+  product: ProductDto;
 }> = (props) => {
   return (
-    <A href={"/products/" + props.product().id}>
+    <A href={"/products/" + props.product.id}>
       <img
         class="aspect-[3/4] w-full bg-slate-100"
-        src={props.product().pic}
+        src={props.product.pic}
         alt="product picture"
       />
 
-      <div>{props.product().name}</div>
+      <div>{props.product.name}</div>
       <div class="text-rose-600">
-        &yen {props.product().value.toLocaleString()}
+        &yen {props.product.value.toLocaleString()}
       </div>
     </A>
   );

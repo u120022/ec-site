@@ -1,33 +1,27 @@
-import { useSearchParams } from "@solidjs/router";
-import { Component, createResource, Index, Show } from "solid-js";
+import { Component, createResource, For } from "solid-js";
 import { SessionModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
+import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
 const COUNT_PER_PAGE = 8;
 
 // セッション一覧を表示
 const SessionList: Component = () => {
   // URLのパラメータを解析
-  const [params, setParams] = useSearchParams();
-  const page = () => parseInt(params.page) || 0;
-  const setPage = (page: number) => setParams({ ...params, page });
+  const [page, setPage] = useSearchParamInt("page", 0);
 
   const [token] = useToken();
 
   // セッションを取得
   const [sessions, { refetch: refetchSession }] = createResource(
-    () => ({ token: token(), page: page() }),
-    async ({ token, page }) =>
-      await service.getSessions(token, page, COUNT_PER_PAGE)
+    page,
+    async (page) => await service.getSessions(token(), page, COUNT_PER_PAGE)
   );
 
   // セッションの削除
   const deleteSession = async (_token: string) => {
-    // 現在のセッションは削除しない
-    if (_token == token()) return;
-
     await service.deleteSession(_token);
     await refetchSession();
     await refetchCount();
@@ -35,10 +29,9 @@ const SessionList: Component = () => {
 
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
-    token,
-    async (token) => await service.getSessionCount(token)
+    async () => await service.getSessionCount(token())
   );
-  const maxPageCount = () => Math.ceil(count() / COUNT_PER_PAGE);
+  const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
   return (
     <div class="space-y-3">
@@ -52,54 +45,40 @@ const SessionList: Component = () => {
         現在のセッションを削除する場合はログアウトしてください。
       </div>
 
-      <Show
-        when={sessions()}
-        fallback={<div class="text-slate-600">セッションが存在しません。</div>}
-      >
-        <div class="space-y-3">
-          <Index each={sessions()}>
-            {(x) => <SessionCard session={x} deleteSession={deleteSession} />}
-          </Index>
-        </div>
-
-        <Show when={1 < maxPageCount()}>
-          <div class="p-3 text-center">
-            <PagenateBar
-              page={page}
-              setPage={setPage}
-              maxPageCount={maxPageCount}
+      <div class="space-y-3">
+        <For each={sessions()}>
+          {(session) => (
+            <SessionCard
+              session={session}
+              deleteSession={() => deleteSession(session.token)}
             />
-          </div>
-        </Show>
-      </Show>
+          )}
+        </For>
+      </div>
+
+      <div class="p-3 text-center">
+        <PagenateBar
+          page={page()}
+          onSetPage={setPage}
+          maxPageCount={maxPageCount()}
+        />
+      </div>
     </div>
   );
 };
 
 // セッション一覧のリスト項目
 const SessionCard: Component<{
-  session: () => SessionModel;
-  deleteSession: (token: string) => Promise<void>;
+  session: SessionModel;
+  deleteSession: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
-  // セッションを削除する
-  const deleteSession = async () => {
-    await props.deleteSession(props.session().token);
-  };
-
   return (
     <div class="flex justify-between rounded border border-slate-300 p-3">
-      <div>ログイン: {props.session().date.toLocaleString()}</div>
+      <div>ログイン: {props.session.date.toLocaleString()}</div>
 
-      <Show
-        when={props.session().token != token()}
-        fallback={<div class="text-slate-600">現在のセッション</div>}
-      >
-        <button class="text-rose-600" onClick={deleteSession}>
-          セッションを削除
-        </button>
-      </Show>
+      <button class="text-rose-600" onClick={props.deleteSession}>
+        セッションを削除
+      </button>
     </div>
   );
 };

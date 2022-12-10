@@ -6,14 +6,14 @@ import { service } from "../Service";
 const AddressForm: Component<{
   onSubmit?: () => void;
 }> = (props) => {
+  const [token] = useToken();
+
   const [form, setForm] = createStore({
     name: "",
     country: "",
     address: "",
     zipcode: "",
   });
-
-  const [token] = useToken();
 
   const onSubmit = async () => {
     const address = {

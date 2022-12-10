@@ -9,7 +9,7 @@ const Register = lazy(() => import("./Register"));
 const Frame = lazy(() => import("./Frame"));
 const ProductList = lazy(() => import("./ProductList"));
 const Product = lazy(() => import("./Product"));
-const Cart = lazy(() => import("./Cart"));
+const CartItemList = lazy(() => import("./CartItemList"));
 const ReceiptList = lazy(() => import("./ReceiptList"));
 const Personal = lazy(() => import("./Personal"));
 const User = lazy(() => import("./User"));
@@ -29,14 +29,14 @@ const App: Component = () => {
         <Route path="/" component={Frame}>
           <Route path={["/", "/products"]} component={ProductList} />
           <Route path="/products/:id" component={Product} />
-          <Route path="/cart" component={Cart} />
+          <Route path="/cart" component={CartItemList} />
           <Route path="/receipts" component={ReceiptList} />
           <Route path="/personal" component={Personal}>
             <Route path={["/", "/user"]} component={User} />
-            <Route path={"/user_modify"} component={UserModify} />
-            <Route path={"/address"} component={AddressList} />
-            <Route path={"/payment"} component={PaymentList} />
-            <Route path="/session" component={SessionList} />
+            <Route path="/user_modify" component={UserModify} />
+            <Route path="/addresses" component={AddressList} />
+            <Route path="/payments" component={PaymentList} />
+            <Route path="/sessions" component={SessionList} />
           </Route>
         </Route>
       </Routes>
