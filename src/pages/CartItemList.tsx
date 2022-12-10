@@ -1,4 +1,4 @@
-import { A } from "@solidjs/router";
+import { A, Link } from "@solidjs/router";
 import { Component, createResource, For, Show } from "solid-js";
 import { CartItemDto } from "../Dto";
 import { service } from "../Service";
@@ -39,12 +39,6 @@ const CartItemList: Component = () => {
     await refetch();
   };
 
-  // カート内アイテムを購入
-  const purchaceInCart = async () => {
-    // await service.purchaseInCart();
-    await refetch();
-  };
-
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
     async () => await service.getCartItemCount(token())
@@ -54,9 +48,7 @@ const CartItemList: Component = () => {
   // カート内に商品が1つでもあるか確認
   const exists = () => {
     const current = cartItems();
-
     if (!current) return false;
-
     return 0 < current.length;
   };
 
@@ -102,12 +94,9 @@ const CartItemList: Component = () => {
         </div>
 
         <div class="justify-between text-center">
-          <button
-            onClick={purchaceInCart}
-            class="rounded bg-blue-600 p-3 text-white"
-          >
+          <Link href="/purchase" class="rounded bg-blue-600 p-3 text-white">
             購入手続き
-          </button>
+          </Link>
         </div>
       </Show>
     </div>

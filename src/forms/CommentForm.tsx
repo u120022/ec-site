@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { CommentFormModel } from "../FormModels";
 import { useToken } from "../pages/TokenContext";
@@ -11,9 +11,19 @@ const CommentForm: Component<{
   const [token] = useToken();
 
   const [form, setForm] = createStore<CommentFormModel>({ body: "" });
+  const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
-    await service.createComment(token(), props.productId, form.body);
+    const status = await service.createComment(
+      token(),
+      props.productId,
+      form.body
+    );
+
+    if (status != "SUCCESSFUL") {
+      setFormError("コメントを投稿できませんでした。");
+      return;
+    }
 
     setForm({ body: "" });
 
@@ -22,7 +32,10 @@ const CommentForm: Component<{
 
   return (
     <form class="space-y-3" method="dialog" onSubmit={onSubmit}>
-      <div class="">コメントを投稿する</div>
+      <div>
+        <div>コメントを投稿する</div>
+        <div class="text-rose-600">{formError()}</div>
+      </div>
 
       <div>
         <textarea

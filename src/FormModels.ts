@@ -26,3 +26,8 @@ export interface UserPasswordFormModel {
   password: string;
   confirmPassword: string;
 }
+
+export interface PurchaseFormModel {
+  addressId?: number;
+  paymentId?: number;
+}

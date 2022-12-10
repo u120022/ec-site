@@ -30,7 +30,7 @@ const RegisterForm: Component<{
     );
 
     if (status != "SUCCESSFUL") {
-      setFormError("新規登録に失敗しました。");
+      setFormError("新規登録できませんでした。");
       return;
     }
 
@@ -43,7 +43,7 @@ const RegisterForm: Component<{
     <form class="flex flex-col gap-6" method="dialog" onSubmit={onSubmit}>
       <div>
         <div class="text-3xl font-bold">新規登録</div>
-        <span class="text-rose-600">{formError()}</span>
+        <div class="text-rose-600">{formError()}</div>
       </div>
 
       <div>

@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
@@ -14,6 +14,7 @@ const AddressForm: Component<{
     address: "",
     zipcode: "",
   });
+  const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
     const address = {
@@ -22,7 +23,12 @@ const AddressForm: Component<{
       address: form.address,
       zipcode: form.zipcode,
     };
-    await service.createAddress(token(), address);
+    const status = await service.createAddress(token(), address);
+
+    if (status != "SUCCESSFUL") {
+      setFormError("住所を追加できませんでした。");
+      return;
+    }
 
     setForm({ name: "", country: "", address: "", zipcode: "" });
 

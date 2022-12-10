@@ -1,6 +1,6 @@
 import { Component, createResource, For } from "solid-js";
+import { PaymentDto } from "../Dto";
 import PaymentForm from "../forms/PaymentForm";
-import { PaymentModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
@@ -67,7 +67,7 @@ const PaymentList: Component = () => {
 
 // 支払い方法のリスト項目
 const PaymentCard: Component<{
-  payment: PaymentModel;
+  payment: PaymentDto;
   deletePayment: () => void;
 }> = (props) => {
   return (

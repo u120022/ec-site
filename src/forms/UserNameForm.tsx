@@ -18,7 +18,7 @@ const UserNameForm: Component<{
     const status = await service.updateUser(token(), { name: form.name });
 
     if (status != "SUCCESSFUL") {
-      setFormError("名前の変更に失敗しました。");
+      setFormError("名前を変更できませんでした。");
       return;
     }
 
@@ -36,9 +36,7 @@ const UserNameForm: Component<{
             <div>{user.name}</div>
           </div>
 
-          <div>
-            <span class="text-rose-600">{formError()}</span>
-          </div>
+          <div class="text-rose-600">{formError()}</div>
 
           <div>
             <div>変更先の氏名</div>

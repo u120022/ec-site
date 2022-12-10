@@ -18,7 +18,7 @@ const UserEmailForm: Component<{
     const status = await service.updateUser(token(), { email: form.email });
 
     if (status != "SUCCESSFUL") {
-      setFormError("メールアドレスの変更に失敗しました。");
+      setFormError("メールアドレスを変更できませんでした。");
       return;
     }
 
@@ -36,9 +36,7 @@ const UserEmailForm: Component<{
             <div>{user.email}</div>
           </div>
 
-          <div>
-            <span class="text-rose-600">{formError()}</span>
-          </div>
+          <div class="text-rose-600">{formError()}</div>
 
           <div>
             <div>変更先のメールアドレス</div>

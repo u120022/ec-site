@@ -30,9 +30,7 @@ const ReceiptList: Component = () => {
   // レシートが1つでもあるか確認
   const exists = () => {
     const current = count();
-
     if (!current) return false;
-
     return 0 < current;
   };
 
@@ -67,6 +65,7 @@ const ReceiptItemList: Component<{
 }> = (props) => {
   const [token] = useToken();
 
+  // 複数存在するためURLとバインドしない
   const [page, setPage] = createSignal(0);
 
   // 1回の購入の購入商品一覧を取得

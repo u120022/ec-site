@@ -1,6 +1,6 @@
 import { Component, createResource, For } from "solid-js";
+import { AddressDto } from "../Dto";
 import AddressForm from "../forms/AddressForm";
-import { AddressModel } from "../Models";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
@@ -67,7 +67,7 @@ const AddressList: Component = () => {
 
 // 住所のリスト項目
 const AddressCard: Component<{
-  address: AddressModel;
+  address: AddressDto;
   deleteAddress: () => void;
 }> = (props) => {
   return (

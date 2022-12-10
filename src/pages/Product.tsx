@@ -1,10 +1,10 @@
-import { Component, createResource, createSignal, For, Show } from "solid-js";
+import { Component, createResource, For, Show } from "solid-js";
 import { CommentDto, ProductDto } from "../Dto";
 import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
-import { calcMaxPageCount, useParamInt } from "./Utils";
+import { calcMaxPageCount, useParamInt, useSearchParamInt } from "./Utils";
 
 // 商品の詳細を表示
 const Product: Component = () => {
@@ -49,7 +49,7 @@ const Product: Component = () => {
 
                 <div class="flex-grow"></div>
 
-                <div class="mx-auto space-x-3">
+                <div class="mx-auto flex gap-3">
                   <button
                     class="rounded bg-blue-600 p-3 text-white"
                     onClick={pushToCart}
@@ -59,9 +59,9 @@ const Product: Component = () => {
 
                   <Show when={cartItem()} keyed={true}>
                     {(cartItem) => (
-                      <span class="p-3">
+                      <div class="p-3">
                         カート内に{cartItem.count.toLocaleString()}個
-                      </span>
+                      </div>
                     )}
                   </Show>
                 </div>
@@ -84,7 +84,7 @@ const CommentList: Component<{
   product: ProductDto;
 }> = (props) => {
   // ページの状態を保持
-  const [page, setPage] = createSignal(0);
+  const [page, setPage] = useSearchParamInt("comment_page", 0);
 
   // コメント一覧を取得
   // productIdかpageが変更されると更新

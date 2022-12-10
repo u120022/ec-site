@@ -28,7 +28,7 @@ const UserNameForm: Component<{
     });
 
     if (status != "SUCCESSFUL") {
-      setFormError("パスワードの変更に失敗しました。");
+      setFormError("パスワードを変更できませんでした。");
       return;
     }
 
@@ -46,9 +46,7 @@ const UserNameForm: Component<{
             <div>表示できません。</div>
           </div>
 
-          <div>
-            <span class="text-rose-600">{formError()}</span>
-          </div>
+          <div class="text-rose-600">{formError()}</div>
 
           <div>
             <div>変更先のパスワード</div>

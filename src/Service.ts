@@ -273,7 +273,7 @@ export class Service {
 
   // カート内商品を購入
   async purchaseInCart(token: string, addressId: number, paymentId: number) {
-    await db
+    return await db
       .transaction(
         "rw",
         [
@@ -290,11 +290,11 @@ export class Service {
           const user = await this.getUserImpl(token);
           if (!user) throw new Error();
 
-          const address = await db.addresses.get({ userId: user.id as number });
-          if (!address || address.id != addressId) throw new Error();
+          const address = await db.addresses.get(addressId);
+          if (!address || address.userId != user.id) throw new Error();
 
-          const payment = await db.payments.get({ userId: user.id as number });
-          if (!payment || payment.id != paymentId) throw new Error();
+          const payment = await db.payments.get(paymentId);
+          if (!payment || payment.userId != user.id) throw new Error();
 
           const cartItems = db.cartItems.where({ userId: user.id as number });
 

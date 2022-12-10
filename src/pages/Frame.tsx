@@ -49,7 +49,7 @@ const Frame: Component = () => {
           }
         >
           {(user) => (
-            <A class="p-3" href="/personal">
+            <A class="p-3 font-bold" href="/personal">
               {user.name}
             </A>
           )}

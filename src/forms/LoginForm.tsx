@@ -22,7 +22,7 @@ const LoginForm: Component<{
     const token = await service.createSession(form.email, form.password);
 
     if (!token) {
-      setFormError("ログインに失敗しました。");
+      setFormError("ログインできませんでした。");
       return;
     }
 
@@ -37,7 +37,7 @@ const LoginForm: Component<{
     <form class="flex flex-col gap-6" method="dialog" onSubmit={onSubmit}>
       <div>
         <div class="text-3xl font-bold">ログイン</div>
-        <span class="text-rose-600">{formError()}</span>
+        <div class="text-rose-600">{formError()}</div>
       </div>
 
       <div>
