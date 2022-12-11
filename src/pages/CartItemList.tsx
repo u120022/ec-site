@@ -36,18 +36,18 @@ const CartItemList: Component<{
       await service.getCartItems(props.token, page, COUNT_PER_PAGE)
   );
 
-  // カート内に商品が1つでもあるか確認
-  const exists = () => {
-    const current = cartItems();
-    if (!current) return false;
-    return 0 < current.length;
-  };
-
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
     async () => await service.getCartItemCount(props.token)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
+
+  // カート内に商品が1つでもあるか確認
+  const exists = () => {
+    const current = count();
+    if (!current) return false;
+    return 0 < current;
+  };
 
   // カート内アイテムを削除
   const popFromCart = async (id: number, quantity: number) => {

@@ -32,18 +32,18 @@ const PurchaseForm: Component<{
       await service.getCartItems(props.token, page, COUNT_PER_PAGE)
   );
 
-  // カート内に商品が1つでもあるか確認
-  const exists = () => {
-    const current = cartItems();
-    if (!current) return false;
-    return 0 < current.length;
-  };
-
   // ページ数を計算
   const [count] = createResource(
     async () => await service.getCartItemCount(props.token)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
+
+  // カート内に商品が1つでもあるか確認
+  const exists = () => {
+    const current = count();
+    if (!current) return false;
+    return 0 < current;
+  };
 
   // カート内アイテムの総額を取得
   const [totalPrice] = createResource(
@@ -203,9 +203,9 @@ const AddressSelector: Component<{
 
   // 住所が1つでもあるか確認
   const exists = () => {
-    const current = addresses();
+    const current = count();
     if (!current) return false;
-    return 0 < current.length;
+    return 0 < current;
   };
 
   return (
@@ -295,9 +295,9 @@ const PaymentSelector: Component<{
 
   // 支払い方法が1つでもあるか確認
   const exists = () => {
-    const current = payments();
+    const current = count();
     if (!current) return false;
-    return 0 < current.length;
+    return 0 < current;
   };
 
   return (
