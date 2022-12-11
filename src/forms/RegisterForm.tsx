@@ -34,7 +34,7 @@ const RegisterForm: Component<{
       return;
     }
 
-    navigate("/login", { replace: true });
+    navigate("/ec-site/login", { replace: true });
 
     if (props.onSubmit) props.onSubmit();
   };

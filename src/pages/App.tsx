@@ -24,23 +24,25 @@ const App: Component = () => {
   return (
     <TokenProvider>
       <Routes>
-        <Route path="/about" component={About} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/register_successful" component={RegisterSuccessful} />
-        <Route path="/" component={Frame}>
-          <Route path="/" component={Overview} />
-          <Route path="/products" component={ProductList} />
-          <Route path="/products/:product_id" component={Product} />
-          <Route path="/cart" component={CartItemList} />
-          <Route path="/purchase" component={Purchase} />
-          <Route path="/receipts" component={ReceiptList} />
-          <Route path="/personal" component={Personal}>
-            <Route path={["/", "/user"]} component={User} />
-            <Route path="/user_modify" component={UserModify} />
-            <Route path="/addresses" component={AddressList} />
-            <Route path="/payments" component={PaymentList} />
-            <Route path="/sessions" component={SessionList} />
+        <Route path="/" component={About} />
+        <Route path="/ec-site">
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/register_successful" component={RegisterSuccessful} />
+          <Route path="/" component={Frame}>
+            <Route path="/" component={Overview} />
+            <Route path="/products" component={ProductList} />
+            <Route path="/products/:product_id" component={Product} />
+            <Route path="/cart" component={CartItemList} />
+            <Route path="/purchase" component={Purchase} />
+            <Route path="/receipts" component={ReceiptList} />
+            <Route path="/personal" component={Personal}>
+              <Route path={["/", "/user"]} component={User} />
+              <Route path="/user_modify" component={UserModify} />
+              <Route path="/addresses" component={AddressList} />
+              <Route path="/payments" component={PaymentList} />
+              <Route path="/sessions" component={SessionList} />
+            </Route>
           </Route>
         </Route>
       </Routes>

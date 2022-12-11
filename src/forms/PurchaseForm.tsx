@@ -73,7 +73,7 @@ const PurchaseForm: Component<{
       return;
     }
 
-    navigate("/receipts", { replace: true });
+    navigate("/ec-site/receipts", { replace: true });
 
     if (props.onSubmit) props.onSubmit();
   };
@@ -160,7 +160,7 @@ const CartItem: Component<{
           <div class="flex-grow space-y-3">
             <A
               class="text-2xl font-bold"
-              href={"/products/" + props.cartItem.productId}
+              href={"/ec-site/products/" + props.cartItem.productId}
             >
               {product.name}
             </A>

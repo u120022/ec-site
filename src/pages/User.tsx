@@ -48,7 +48,7 @@ const User: Component<{
             </div>
 
             <div>
-              <A href="/personal/user_modify" class="text-blue-600">
+              <A href="/ec-site/personal/user_modify" class="text-blue-600">
                 ユーザ情報を変更する
               </A>
             </div>

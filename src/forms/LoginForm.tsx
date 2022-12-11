@@ -28,7 +28,7 @@ const LoginForm: Component<{
 
     setToken(token);
 
-    navigate("/", { replace: true });
+    navigate("/ec-site", { replace: true });
 
     if (props.onSubmit) props.onSubmit();
   };
@@ -64,7 +64,7 @@ const LoginForm: Component<{
 
       <input type="submit" class="w-full rounded bg-blue-600 p-3 text-white" />
 
-      <A class="mx-auto text-blue-600" href="/register">
+      <A class="mx-auto text-blue-600" href="/ec-site/register">
         新規登録
       </A>
     </form>

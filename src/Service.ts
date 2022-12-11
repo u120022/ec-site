@@ -464,6 +464,10 @@ export class Service {
 
   // ユーザの新規登録
   async registerUser(name: string, email: string, password: string) {
+    // ダイジェスト値を生成
+    // transaction内で実行は不可能
+    const digest = await genHashSHA256(password);
+
     return await db
       .transaction("rw", db.users, async () => {
         if (name.length == 0) throw new Error();
@@ -475,7 +479,6 @@ export class Service {
         if (0 < count) throw new Error();
 
         // パスワードをダイジェスト値として保存
-        const digest = await genHashSHA256(password);
         await db.users.add({ name, digest, email });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")

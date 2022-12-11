@@ -15,23 +15,26 @@ const Personal: Component = () => {
 
     setToken(undefined);
 
-    navigate("/", { replace: true });
+    navigate("/ec-site", { replace: true });
   };
 
   return (
     <div class="flex gap-6">
       <div class="basis-1/5">
         <div class="flex flex-col gap-3">
-          <A href="/personal/user" class="rounded bg-slate-100 p-3">
+          <A href="/ec-site/personal/user" class="rounded bg-slate-100 p-3">
             ユーザ情報の表示・編集
           </A>
-          <A href="/personal/addresses" class="rounded bg-slate-100 p-3">
+          <A
+            href="/ec-site/personal/addresses"
+            class="rounded bg-slate-100 p-3"
+          >
             住所の表示・編集
           </A>
-          <A href="/personal/payments" class="rounded bg-slate-100 p-3">
+          <A href="/ec-site/personal/payments" class="rounded bg-slate-100 p-3">
             支払い方法の表示・編集
           </A>
-          <A href="/personal/sessions" class="rounded bg-slate-100 p-3">
+          <A href="/ec-site/personal/sessions" class="rounded bg-slate-100 p-3">
             セッションの表示・編集
           </A>
           <A href="#" class="rounded bg-slate-100 p-3" onClick={logout}>

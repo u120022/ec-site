@@ -9,19 +9,19 @@ const Frame: Component = () => {
   return (
     <div class="flex min-h-[100vh] min-w-[1024px] flex-col">
       <div class="sticky top-0 mb-6 flex gap-3 bg-[#fff4] p-3 shadow backdrop-blur">
-        <A class="p-3 font-bold" href="/">
+        <A class="p-3 font-bold" href="/ec-site">
           ec-site
         </A>
 
         <div class="flex-grow"></div>
 
-        <A class="p-3 font-bold" href="/products">
+        <A class="p-3 font-bold" href="/ec-site/products">
           ストア
         </A>
-        <A class="p-3 font-bold" href="/cart">
+        <A class="p-3 font-bold" href="/ec-site/cart">
           カート
         </A>
-        <A class="p-3 font-bold" href="/receipts">
+        <A class="p-3 font-bold" href="/ec-site/receipts">
           購入履歴
         </A>
 
@@ -42,12 +42,12 @@ const Frame: Component = () => {
 
       <div class="mt-12 bg-slate-100 p-3 text-slate-600">
         <div class="flex justify-center gap-3">
-          <A class="p-3" href="/">
+          <A class="p-3" href="/ec-site">
             ec-site
           </A>
         </div>
         <div class="flex justify-center gap-3">
-          <A class="p-3" href="/about">
+          <A class="p-3" href="/">
             このサイトについて
           </A>
         </div>
@@ -66,7 +66,7 @@ const LoginStatusView: Component<{
   return (
     <Show when={user()} keyed={true} fallback={<DisabledLoginStatusView />}>
       {(user) => (
-        <A class="p-3 font-bold" href="/personal">
+        <A class="p-3 font-bold" href="/ec-site/personal">
           {user.name}
         </A>
       )}
@@ -76,7 +76,7 @@ const LoginStatusView: Component<{
 
 const DisabledLoginStatusView: Component = () => {
   return (
-    <A class="p-3 font-bold" href="/login">
+    <A class="p-3 font-bold" href="/ec-site/login">
       ログイン
     </A>
   );

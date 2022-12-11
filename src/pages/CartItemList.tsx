@@ -112,7 +112,10 @@ const CartItemList: Component<{
         </div>
 
         <div class="justify-between text-center">
-          <Link href="/purchase" class="rounded bg-blue-600 p-3 text-white">
+          <Link
+            href="/ec-site/purchase"
+            class="rounded bg-blue-600 p-3 text-white"
+          >
             購入手続き
           </Link>
         </div>
@@ -145,7 +148,7 @@ const CartItem: Component<{
           <div class="flex-grow space-y-3">
             <A
               class="text-2xl font-bold"
-              href={"/products/" + props.cartItem.productId}
+              href={"/ec-site/products/" + props.cartItem.productId}
             >
               {product.name}
             </A>

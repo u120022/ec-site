@@ -27,7 +27,7 @@ const Attention: Component = () => {
           商品の購入によって購入額の請求や商品が発送されることはありません。
         </li>
         <li>
-          ユーザ認証には簡易的なセッション認証を行います。トークン生成はUUIDv4でありCSRF対策を行っていません。
+          ユーザ認証には簡易的なセッション認証を行います。トークン生成にはUUIDv4を使用します。CSRF対策を行っていません。
         </li>
       </ul>
       <br />
@@ -39,7 +39,7 @@ const Attention: Component = () => {
         データーベースの初期化を行う場合はブラウザで当サイトのIndexedDBを消去してください。
       </div>
       <div>
-        初期・初期化後のデータベースには次のユーザが登録されています。そのほかユーザ作成も可能です。
+        初期・初期化後のデータベースには次のユーザが登録されています。ユーザ作成も可能です。
       </div>
       <ul class="list-inside list-decimal">
         <li>
@@ -54,7 +54,7 @@ const Attention: Component = () => {
         </li>
       </ul>
       <br />
-      <A class="text-blue-600" href="/">
+      <A class="text-blue-600" href="/ec-site">
         続ける
       </A>
     </div>

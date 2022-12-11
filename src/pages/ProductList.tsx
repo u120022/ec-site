@@ -6,7 +6,7 @@ import PagenateBar from "./PagenateBar";
 import { useSearchParamInt, useSearchParam, calcMaxPageCount } from "./Utils";
 
 // 1ページに表示する商品の数
-const COUNT_PER_PAGE = 8;
+const COUNT_PER_PAGE = 16;
 
 // 商品の一覧をグリッド表示
 const ProductList: Component = () => {
@@ -76,7 +76,7 @@ const ProductCard: Component<{
   product: ProductDto;
 }> = (props) => {
   return (
-    <A href={"/products/" + props.product.id}>
+    <A href={"/ec-site/products/" + props.product.id}>
       <img
         class="aspect-[3/4] w-full bg-slate-100"
         src={props.product.pic}
