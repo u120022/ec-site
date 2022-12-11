@@ -7,7 +7,7 @@ const UserPasswordForm: Component<{
   token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [user] = createResource(
+  const [user, { refetch: refetchUser }] = createResource(
     async () => await service.getUserPrivate(props.token)
   );
 
@@ -33,6 +33,8 @@ const UserPasswordForm: Component<{
     }
 
     setForm({ password: "", confirmPassword: "" });
+
+    await refetchUser();
 
     if (props.onSubmit) props.onSubmit();
   };

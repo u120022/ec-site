@@ -7,7 +7,7 @@ const UserEmailForm: Component<{
   token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [user] = createResource(
+  const [user, { refetch: refetchUser }] = createResource(
     async () => await service.getUserPrivate(props.token)
   );
 
@@ -23,6 +23,8 @@ const UserEmailForm: Component<{
     }
 
     setForm({ email: "" });
+
+    await refetchUser();
 
     if (props.onSubmit) props.onSubmit();
   };

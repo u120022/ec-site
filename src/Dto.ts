@@ -94,7 +94,6 @@ export interface ReceiptItemDto {
 export const toReceiptItemDto = (model: ReceiptItemModel) =>
   ({
     id: model.id as number,
-    userId: model.userId,
     receiptId: model.receiptId,
     productId: model.productId,
     value: model.value,
@@ -124,7 +123,6 @@ export const toUserPrivateDto = (model: UserModel) =>
     id: model.id,
     name: model.name,
     email: model.email,
-    digest: model.digest,
   } as UserPrivateDto);
 
 export interface SessionDto {
@@ -172,8 +170,6 @@ export const toPaymentDto = (model: PaymentModel) =>
   ({
     id: model.id as number,
     userId: model.userId,
-    cardNumber: model.cardNumber,
     holderName: model.holderName,
     expirationDate: model.expirationDate,
-    securityCode: model.securityCode,
   } as PaymentDto);

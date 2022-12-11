@@ -102,6 +102,13 @@ const ReceiptItemList: Component<{
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
+  const [address] = createResource(
+    async () => await service.getAddress(props.token, props.receipt.addressId)
+  );
+  const [payment] = createResource(
+    async () => await service.getPayment(props.token, props.receipt.paymentId)
+  );
+
   return (
     <div class="space-y-3 rounded border border-slate-300 p-3">
       <div class="text-xl font-bold">{props.receipt.date.toLocaleString()}</div>
@@ -124,6 +131,31 @@ const ReceiptItemList: Component<{
           maxPageCount={maxPageCount()}
         />
       </div>
+
+      <div class="border-b border-slate-300"></div>
+
+      <Show when={address()} keyed>
+        {(address) => (
+          <div>
+            <div class="font-bold">住所</div>
+            <div>
+              {address.name} {address.country} {address.address}{" "}
+              {address.zipcode}
+            </div>
+          </div>
+        )}
+      </Show>
+
+      <Show when={payment()} keyed>
+        {(payment) => (
+          <div>
+            <div class="font-bold">支払い方法</div>
+            <div>
+              {payment.holderName} {payment.expirationDate}
+            </div>
+          </div>
+        )}
+      </Show>
     </div>
   );
 };

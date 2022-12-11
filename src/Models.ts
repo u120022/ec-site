@@ -60,6 +60,7 @@ export interface AddressModel {
   country: string;
   address: string;
   zipcode: string;
+  deleted: 0 | 1;
 }
 
 export interface PaymentModel {
@@ -69,4 +70,5 @@ export interface PaymentModel {
   holderName: string;
   expirationDate: string;
   securityCode: string;
+  deleted: 0 | 1;
 }

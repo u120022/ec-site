@@ -140,7 +140,7 @@ export class Service {
           if (!user) throw new Error();
 
           const cartItem = await db.cartItems.get({
-            userId: user.id as number,
+            userId: user.id,
             productId,
           });
 
@@ -158,8 +158,9 @@ export class Service {
 
           // カート内在庫数が商品在庫数を上回らないようにする
           if (product.count < cartItem.count + count) throw new Error();
-          cartItem.count += count;
-          await db.cartItems.update(cartItem.id as number, cartItem);
+          await db.cartItems.update(cartItem.id as number, {
+            count: cartItem.count + count,
+          });
         }
       )
       .then<StatusCode>((_) => "SUCCESSFUL")
@@ -173,10 +174,7 @@ export class Service {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        const cartItem = await db.cartItems.get({
-          userId: user.id as number,
-          productId,
-        });
+        const cartItem = await db.cartItems.get({ userId: user.id, productId });
         if (!cartItem) throw new Error();
 
         // カート内在庫数が0になった場合は削除して終了
@@ -185,8 +183,9 @@ export class Service {
           return;
         }
 
-        cartItem.count -= count;
-        await db.cartItems.update(cartItem.id as number, cartItem);
+        await db.cartItems.update(cartItem.id as number, {
+          count: cartItem.count - count,
+        });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
@@ -201,7 +200,7 @@ export class Service {
 
         return (
           await db.cartItems
-            .where({ userId: user.id as number })
+            .where({ userId: user.id })
             .reverse()
             .offset(page * count)
             .limit(count)
@@ -218,10 +217,7 @@ export class Service {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        const cartItem = await db.cartItems.get({
-          userId: user.id as number,
-          productId,
-        });
+        const cartItem = await db.cartItems.get({ userId: user.id, productId });
         if (!cartItem) throw new Error();
 
         return toCartItemDto(cartItem);
@@ -236,7 +232,7 @@ export class Service {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        return await db.cartItems.where({ userId: user.id as number }).count();
+        return await db.cartItems.where({ userId: user.id }).count();
       })
       .catch((_) => undefined);
   }
@@ -257,7 +253,7 @@ export class Service {
           let value = 0;
 
           await db.cartItems
-            .where({ userId: user.id as number })
+            .where({ userId: user.id })
             .each(async (cartItem) => {
               const product = await db.products.get(cartItem.productId);
               if (!product) throw new Error();
@@ -296,7 +292,7 @@ export class Service {
           const payment = await db.payments.get(paymentId);
           if (!payment || payment.userId != user.id) throw new Error();
 
-          const cartItems = db.cartItems.where({ userId: user.id as number });
+          const cartItems = db.cartItems.where({ userId: user.id });
 
           // カートが空の場合
           if ((await cartItems.count()) == 0) throw new Error();
@@ -327,8 +323,9 @@ export class Service {
             });
 
             // 購入商品の在庫数を計算
-            product.count -= cartItem.count;
-            db.products.update(product.id as number, product);
+            db.products.update(product.id as number, {
+              count: product.count - cartItem.count,
+            });
           });
 
           // カートを空にする
@@ -348,7 +345,7 @@ export class Service {
 
         return (
           await db.receipts
-            .where({ userId: user.id as number })
+            .where({ userId: user.id })
             .reverse()
             .offset(page * count)
             .limit(count)
@@ -582,15 +579,22 @@ export class Service {
   }
 
   // 住所の一覧を取得
-  async getAddresses(token: string, page: number, count: number) {
+  async getAddresses(
+    token: string,
+    page: number,
+    count: number,
+    opt?: { deleted?: boolean }
+  ) {
     return await db
       .transaction("r", db.sessions, db.users, db.addresses, async () => {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
+        let collection = db.addresses.where({ userId: user.id, deleted: 0 });
+        if (opt?.deleted) collection = db.addresses.where({ userId: user.id });
+
         return (
-          await db.addresses
-            .where({ userId: user.id })
+          await collection
             .offset(page * count)
             .limit(count)
             .toArray()
@@ -600,13 +604,31 @@ export class Service {
   }
 
   // 住所の数を取得
-  async getAddressCount(token: string) {
+  async getAddressCount(token: string, opt?: { deleted?: boolean }) {
     return await db
       .transaction("r", db.sessions, db.users, db.addresses, async () => {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        return await db.addresses.where({ userId: user.id }).count();
+        let collection = db.addresses.where({ userId: user.id, deleted: 0 });
+        if (opt?.deleted) collection = db.addresses.where({ userId: user.id });
+
+        return await collection.count();
+      })
+      .catch((_) => undefined);
+  }
+
+  // 住所を取得
+  async getAddress(token: string, id: number) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.addresses, async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const address = await db.addresses.get(id);
+        if (!address || address.userId != user.id) throw new Error();
+
+        return toAddressDto(address);
       })
       .catch((_) => undefined);
   }
@@ -621,7 +643,9 @@ export class Service {
         const address = await db.addresses.get(id);
         if (!address || address.userId != user.id) return undefined;
 
-        await db.addresses.delete(address.id as number);
+        if (address.deleted == 1) throw new Error();
+
+        await db.addresses.update(address.id as number, { deleted: 1 });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
@@ -637,22 +661,33 @@ export class Service {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        await db.addresses.add({ ...address, userId: user.id as number });
+        await db.addresses.add({
+          ...address,
+          userId: user.id as number,
+          deleted: 0,
+        });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
   }
 
   // 支払い方法の一覧を取得
-  async getPayments(token: string, page: number, count: number) {
+  async getPayments(
+    token: string,
+    page: number,
+    count: number,
+    opt?: { deleted?: false }
+  ) {
     return await db
       .transaction("r", db.sessions, db.users, db.payments, async () => {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
+        let collection = db.payments.where({ userId: user.id, deleted: 0 });
+        if (opt?.deleted) collection = db.payments.where({ userId: user.id });
+
         return (
-          await db.payments
-            .where({ userId: user.id })
+          await collection
             .offset(page * count)
             .limit(count)
             .toArray()
@@ -662,13 +697,31 @@ export class Service {
   }
 
   // 支払い方法の数を取得
-  async getPaymentCount(token: string) {
+  async getPaymentCount(token: string, opt?: { deleted?: false }) {
     return await db
       .transaction("r", db.sessions, db.users, db.payments, async () => {
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
 
-        return await db.payments.where({ userId: user.id }).count();
+        let collection = db.payments.where({ userId: user.id, deleted: 0 });
+        if (opt?.deleted) collection = db.payments.where({ userId: user.id });
+
+        return await collection.count();
+      })
+      .catch((_) => undefined);
+  }
+
+  // 支払い方法を取得
+  async getPayment(token: string, id: number) {
+    return await db
+      .transaction("r", db.sessions, db.users, db.payments, async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const payment = await db.payments.get(id);
+        if (!payment || payment.userId != user.id) throw new Error();
+
+        return toPaymentDto(payment);
       })
       .catch((_) => undefined);
   }
@@ -683,7 +736,9 @@ export class Service {
         const payment = await db.payments.get(id);
         if (!payment || payment.userId != user.id) throw new Error();
 
-        await db.payments.delete(payment.id as number);
+        if (payment.deleted == 1) throw new Error();
+
+        await db.payments.update(payment.id as number, { deleted: 1 });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
@@ -704,7 +759,11 @@ export class Service {
         const user = await this.getUserImpl(token);
         if (!user) return undefined;
 
-        await db.payments.add({ ...payment, userId: user.id as number });
+        await db.payments.add({
+          ...payment,
+          userId: user.id as number,
+          deleted: 0,
+        });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");

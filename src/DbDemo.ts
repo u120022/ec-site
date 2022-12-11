@@ -2,7 +2,6 @@ import { db } from "./Db";
 
 // デモ用のデータ
 export const populate = () => {
-  // ユーザー
   db.users.bulkAdd([
     {
       name: "Alice",
@@ -18,7 +17,28 @@ export const populate = () => {
     },
   ]);
 
-  // 商品
+  db.addresses.bulkAdd([
+    {
+      userId: 1,
+      name: "Alice",
+      country: "German",
+      address: "XXXYYYZZZ",
+      zipcode: "000-0000",
+      deleted: 0,
+    },
+  ]);
+
+  db.payments.bulkAdd([
+    {
+      userId: 1,
+      cardNumber: "0000-0000-0000-0000",
+      holderName: "Alice",
+      expirationDate: "03/25",
+      securityCode: "000",
+      deleted: 0,
+    },
+  ]);
+
   db.products.bulkAdd([
     {
       name: "Item 1",
