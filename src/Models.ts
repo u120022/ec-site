@@ -34,7 +34,6 @@ export interface ReceiptModel {
 
 export interface ReceiptItemModel {
   id?: number;
-  userId: number;
   receiptId: number;
   productId: number;
   value: number;

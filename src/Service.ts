@@ -320,7 +320,6 @@ export class Service {
 
             // 購入商品をレシートに関連付ける
             await db.receiptItems.add({
-              userId: user.id as number,
               receiptId,
               productId: cartItem.productId,
               value: product.value,
