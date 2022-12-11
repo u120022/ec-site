@@ -46,8 +46,8 @@ const PurchaseForm: Component<{
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
   // カート内アイテムの総額を取得
-  const [totalValue] = createResource(
-    async () => await service.getTotalValueInCart(props.token)
+  const [totalPrice] = createResource(
+    async () => await service.getTotalPriceInCart(props.token)
   );
 
   // 購入を確定する
@@ -105,10 +105,10 @@ const PurchaseForm: Component<{
         <div class="flex justify-between">
           <div class="text-xl font-bold">合計金額</div>
 
-          <Show when={totalValue()} keyed={true}>
-            {(totalValue) => (
+          <Show when={totalPrice()} keyed={true}>
+            {(totalPrice) => (
               <div class="text-xl text-rose-600">
-                &yen {totalValue.toLocaleString()}
+                &yen {totalPrice.toLocaleString()}
               </div>
             )}
           </Show>
@@ -167,10 +167,10 @@ const CartItem: Component<{
 
             <div class="flex justify-between">
               <div class="text-xl">
-                個数: {props.cartItem.count.toLocaleString()}
+                個数: {props.cartItem.quantity.toLocaleString()}
               </div>
               <div class="text-xl text-rose-600">
-                &yen {product.value.toLocaleString()}
+                &yen {product.price.toLocaleString()}
               </div>
             </div>
 

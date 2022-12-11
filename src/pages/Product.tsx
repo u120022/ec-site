@@ -44,9 +44,9 @@ const Product: Component<{
             <div class="flex basis-1/2 flex-col gap-3">
               <div class="text-4xl font-bold">{product.name}</div>
               <div class="text-2xl text-rose-600">
-                &yen {product.value.toLocaleString()}
+                &yen {product.price.toLocaleString()}
               </div>
-              <div>在庫数: {product.count.toLocaleString()}</div>
+              <div>在庫数: {product.quantity.toLocaleString()}</div>
 
               <div class="border-b border-slate-300"></div>
 
@@ -107,7 +107,9 @@ const ProductPushToCart: Component<{
 
       <Show when={cartItem()} keyed={true}>
         {(cartItem) => (
-          <div class="p-3">カート内に{cartItem.count.toLocaleString()}個</div>
+          <div class="p-3">
+            カート内に{cartItem.quantity.toLocaleString()}個
+          </div>
         )}
       </Show>
     </div>
@@ -182,14 +184,16 @@ const Comment: Component<{
   );
 
   return (
-    <div class="flex gap-3">
-      <Show when={user()} keyed={true}>
-        {(user) => <div class="font-bold">{user.name}</div>}
-      </Show>
+    <div>
+      <div class="flex gap-3">
+        <Show when={user()} keyed={true}>
+          {(user) => <div class="font-bold">{user.name}</div>}
+        </Show>
+
+        <div class="text-slate-600">{props.comment.date.toLocaleString()}</div>
+      </div>
 
       <div>{props.comment.body}</div>
-
-      <div class="text-slate-600">{props.comment.date.toLocaleString()}</div>
     </div>
   );
 };

@@ -11,8 +11,8 @@ const COUNT_PER_PAGE = 8;
 // 商品の一覧をグリッド表示
 const ProductList: Component = () => {
   const [page, setPage] = useSearchParamInt("page", 0);
-  const [orderBy, setOrderBy] = useSearchParam("order_by", "name");
-  const [filter, setFilter] = useSearchParam("filter", undefined);
+  const [orderBy, setOrderBy] = useSearchParam("order_by", "sales_amount_des");
+  const [filter, setFilter] = useSearchParam("filter", "");
 
   // 商品を取得
   // pageが変更されると更新
@@ -30,60 +30,42 @@ const ProductList: Component = () => {
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
   return (
-    <div class="flex gap-6">
-      <div class="basis-1/5">
-        <div class="space-y-3">
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("value_asc")}
-          >
-            価格順(昇順)
-          </div>
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("value_des")}
-          >
-            価格順(後順)
-          </div>
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("date_asc")}
-          >
-            販売日順(昇順)
-          </div>
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("date_des")}
-          >
-            販売日順(降順)
-          </div>
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("name_asc")}
-          >
-            名前順(昇順)
-          </div>
-          <div
-            class="rounded bg-slate-100 p-3"
-            onClick={(_) => setOrderBy("name_des")}
-          >
-            名前順(降順)
-          </div>
-        </div>
+    <div class="space-y-6">
+      <div class="flex gap-3">
+        <div class="flex-grow"></div>
+        <select
+          class="appearance-none rounded-xl bg-slate-100 px-4 py-2"
+          value={orderBy()}
+          onInput={(e) => setOrderBy(e.currentTarget.value)}
+        >
+          <option value="date_des">発売日(新しい)</option>
+          <option value="date_asc">発売日(古い)</option>
+          <option value="price_des">価格(高い)</option>
+          <option value="price_asc">価格(安い)</option>
+          <option value="quantity_des">在庫数(多い)</option>
+          <option value="quantity_asc">在庫数(少ない)</option>
+          <option value="sales_amount_des">売上数(多い)</option>
+          <option value="sales_amount_asc">売上数(少ない)</option>
+        </select>
+        <input
+          type="search"
+          placeholder="検索"
+          class="w-[16rem] rounded-xl bg-slate-100 px-4 py-2"
+          value={filter()}
+          onChange={(e) => setFilter(e.currentTarget.value)}
+        />
       </div>
 
-      <div class="flex-grow space-y-6">
-        <div class="grid grid-cols-4 gap-3">
-          <For each={products()}>{(x) => <ProductCard product={x} />}</For>
-        </div>
+      <div class="grid grid-cols-4 gap-3">
+        <For each={products()}>{(x) => <ProductCard product={x} />}</For>
+      </div>
 
-        <div class="p-3 text-center">
-          <PagenateBar
-            page={page()}
-            onSetPage={setPage}
-            maxPageCount={maxPageCount()}
-          />
-        </div>
+      <div class="p-3 text-center">
+        <PagenateBar
+          page={page()}
+          onSetPage={setPage}
+          maxPageCount={maxPageCount()}
+        />
       </div>
     </div>
   );
@@ -103,7 +85,7 @@ const ProductCard: Component<{
 
       <div>{props.product.name}</div>
       <div class="text-rose-600">
-        &yen {props.product.value.toLocaleString()}
+        &yen {props.product.price.toLocaleString()}
       </div>
     </A>
   );

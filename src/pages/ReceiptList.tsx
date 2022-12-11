@@ -113,7 +113,7 @@ const ReceiptItemList: Component<{
     <div class="space-y-3 rounded border border-slate-300 p-3">
       <div class="text-xl font-bold">{props.receipt.date.toLocaleString()}</div>
       <div class="text-rose-600">
-        &yen {props.receipt.value.toLocaleString()}
+        &yen {props.receipt.price.toLocaleString()}
       </div>
 
       <div class="border-b border-slate-300"></div>
@@ -189,9 +189,9 @@ const ReceiptItem: Component<{
             </A>
 
             <div class="flex justify-between">
-              <div>個数: {props.receiptItem.count.toLocaleString()}</div>
+              <div>個数: {props.receiptItem.quantity.toLocaleString()}</div>
               <div class="text-rose-600">
-                &yen {props.receiptItem.value.toLocaleString()}
+                &yen {props.receiptItem.price.toLocaleString()}
               </div>
             </div>
           </div>

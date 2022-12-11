@@ -16,8 +16,8 @@ export interface ProductDto {
   desc: string;
   pic: string;
   date: Date;
-  value: number;
-  count: number;
+  price: number;
+  quantity: number;
 }
 
 export const toProductDto = (model: ProductModel) =>
@@ -27,8 +27,8 @@ export const toProductDto = (model: ProductModel) =>
     desc: model.desc,
     pic: model.pic,
     date: model.date,
-    value: model.value,
-    count: model.count,
+    price: model.price,
+    quantity: model.quantity,
   } as ProductDto);
 
 export interface CommentDto {
@@ -52,7 +52,7 @@ export interface CartItemDto {
   id: number;
   userId: number;
   productId: number;
-  count: number;
+  quantity: number;
 }
 
 export const toCartItemDto = (model: CartItemModel) =>
@@ -60,7 +60,7 @@ export const toCartItemDto = (model: CartItemModel) =>
     id: model.id as number,
     userId: model.userId,
     productId: model.productId,
-    count: model.count,
+    quantity: model.quantity,
   } as CartItemDto);
 
 export interface ReceiptDto {
@@ -68,7 +68,7 @@ export interface ReceiptDto {
   userId: number;
   addressId: number;
   paymentId: number;
-  value: number;
+  price: number;
   date: Date;
 }
 
@@ -78,7 +78,7 @@ export const toReceiptDto = (model: ReceiptModel) =>
     userId: model.userId,
     addressId: model.addressId,
     paymentId: model.paymentId,
-    value: model.value,
+    price: model.price,
     date: model.date,
   } as ReceiptDto);
 
@@ -87,8 +87,8 @@ export interface ReceiptItemDto {
   userId: number;
   receiptId: number;
   productId: number;
-  value: number;
-  count: number;
+  price: number;
+  quantity: number;
 }
 
 export const toReceiptItemDto = (model: ReceiptItemModel) =>
@@ -96,8 +96,8 @@ export const toReceiptItemDto = (model: ReceiptItemModel) =>
     id: model.id as number,
     receiptId: model.receiptId,
     productId: model.productId,
-    value: model.value,
-    count: model.count,
+    price: model.price,
+    quantity: model.quantity,
   } as ReceiptItemDto);
 
 export interface UserPublicDto {

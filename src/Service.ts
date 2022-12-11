@@ -23,27 +23,54 @@ export class Service {
     count: number,
     params?: { filter?: string; orderBy?: string }
   ) {
-    let query = db.products.orderBy("name");
+    let collection = db.products.toCollection();
 
-    // 並びの順序の指定
+    // 並びの順序の指定(インデクスを利用)
     if (params?.orderBy) {
-      const re = /(name|date|value)_(asc|des)/;
+      const re = /(date|price|quantity)_(asc|des)/;
       const match = re.exec(params?.orderBy);
 
       if (match) {
-        query = db.products.orderBy(match[1]);
-        if (match[2] == "des") query = query.reverse();
+        collection = db.products.orderBy(match[1]);
+        if (match[2] == "des") collection = collection.reverse();
       }
     }
 
     // フィルター
     if (params?.filter) {
       const filter = params.filter;
-      query = query.filter((x) => simpleFilter(filter, x.name));
+      collection = collection.filter((x) => simpleFilter(filter, x.name));
+    }
+
+    // 並びの順序の指定(高負荷)
+    if (params?.orderBy) {
+      const re = /(sales_amount)_(asc|des)/;
+      const match = re.exec(params?.orderBy);
+
+      if (match) {
+        let array = await collection.toArray();
+
+        const sortables = await Promise.all(
+          array.map(async (product, index) => ({
+            index,
+            sortable: await this.getSalesAmount(product.id as number),
+          }))
+        );
+
+        array = sortables
+          .sort((self, other) => self.sortable - other.sortable)
+          .map(({ index }) => array[index]);
+
+        if (match[2] == "des") array = array.reverse();
+
+        return array
+          .slice(page * count, page * count + count)
+          .map(toProductDto);
+      }
     }
 
     return (
-      await query
+      await collection
         .offset(page * count)
         .limit(count)
         .toArray()
@@ -52,15 +79,15 @@ export class Service {
 
   // 商品数を取得
   async getProductCount(params?: { filter?: string }) {
-    let query = db.products.toCollection();
+    let collection = db.products.toCollection();
 
     // フィルター
     if (params?.filter) {
       const filter = params.filter;
-      query = query.filter((x) => simpleFilter(filter, x.name));
+      collection = collection.filter((x) => simpleFilter(filter, x.name));
     }
 
-    return await query.count();
+    return await collection.count();
   }
 
   // キーから商品を取得
@@ -75,7 +102,7 @@ export class Service {
   async createComment(token: string, productId: number, body: string) {
     return await db
       .transaction("rw", db.sessions, db.users, db.comments, async () => {
-        if (!body || body.length < 16) throw new Error();
+        if (!body || body.length < 16 || 200 < body.length) throw new Error();
 
         const user = await this.getUserImpl(token);
         if (!user) throw new Error();
@@ -124,7 +151,7 @@ export class Service {
   }
 
   // 商品をカートに追加
-  async pushToCart(token: string, productId: number, count: number) {
+  async pushToCart(token: string, productId: number, quantity: number) {
     return await db
       .transaction(
         "rw",
@@ -147,19 +174,20 @@ export class Service {
           // 存在しない場合は追加して終了
           if (!cartItem) {
             // カート内在庫数が商品在庫数を上回らないようにする
-            if (product.count < count) throw new Error();
+            if (product.quantity < quantity) throw new Error();
             await db.cartItems.add({
               userId: user.id as number,
               productId,
-              count,
+              quantity: quantity,
             });
             return;
           }
 
           // カート内在庫数が商品在庫数を上回らないようにする
-          if (product.count < cartItem.count + count) throw new Error();
+          if (product.quantity < cartItem.quantity + quantity)
+            throw new Error();
           await db.cartItems.update(cartItem.id as number, {
-            count: cartItem.count + count,
+            quantity: cartItem.quantity + quantity,
           });
         }
       )
@@ -168,7 +196,7 @@ export class Service {
   }
 
   // 商品をカートから取り出す
-  async popFromCart(token: string, productId: number, count: number) {
+  async popFromCart(token: string, productId: number, quantity: number) {
     return await db
       .transaction("rw", db.sessions, db.users, db.cartItems, async () => {
         const user = await this.getUserImpl(token);
@@ -178,13 +206,13 @@ export class Service {
         if (!cartItem) throw new Error();
 
         // カート内在庫数が0になった場合は削除して終了
-        if (cartItem.count - count <= 0) {
+        if (cartItem.quantity - quantity <= 0) {
           db.cartItems.delete(cartItem.id as number);
           return;
         }
 
         await db.cartItems.update(cartItem.id as number, {
-          count: cartItem.count - count,
+          quantity: cartItem.quantity - quantity,
         });
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
@@ -238,7 +266,7 @@ export class Service {
   }
 
   // カート内総数の合計金額を計算
-  async getTotalValueInCart(token: string) {
+  async getTotalPriceInCart(token: string) {
     return await db
       .transaction(
         "r",
@@ -250,7 +278,7 @@ export class Service {
           const user = await this.getUserImpl(token);
           if (!user) throw new Error();
 
-          let value = 0;
+          let price = 0;
 
           await db.cartItems
             .where({ userId: user.id })
@@ -258,10 +286,10 @@ export class Service {
               const product = await db.products.get(cartItem.productId);
               if (!product) throw new Error();
 
-              value += product.value * cartItem.count;
+              price += product.price * cartItem.quantity;
             });
 
-          return value;
+          return price;
         }
       )
       .catch((_) => undefined);
@@ -298,33 +326,34 @@ export class Service {
           if ((await cartItems.count()) == 0) throw new Error();
 
           // レシートを発行
-          const value = await this.getTotalValueInCart(token);
-          if (!value) throw new Error();
+          const price = await this.getTotalPriceInCart(token);
+          if (!price) throw new Error();
 
           const receiptId = (await db.receipts.add({
             userId: user.id as number,
             addressId,
             paymentId,
             date: new Date(),
-            value,
+            price,
           })) as number;
 
           // 購入商品の関連付けと在庫数の処理
           await cartItems.each(async (cartItem) => {
             const product = await db.products.get(cartItem.productId);
-            if (!product || product.count < cartItem.count) throw new Error();
+            if (!product || product.quantity < cartItem.quantity)
+              throw new Error();
 
             // 購入商品をレシートに関連付ける
             await db.receiptItems.add({
               receiptId,
               productId: cartItem.productId,
-              value: product.value,
-              count: cartItem.count,
+              price: product.price,
+              quantity: cartItem.quantity,
             });
 
             // 購入商品の在庫数を計算
             db.products.update(product.id as number, {
-              count: product.count - cartItem.count,
+              quantity: product.quantity - cartItem.quantity,
             });
           });
 
@@ -420,6 +449,17 @@ export class Service {
         }
       )
       .catch((_) => undefined);
+  }
+
+  // 商品の売り上げ数を集計
+  async getSalesAmount(productId: number) {
+    let salesAmount = 0;
+
+    await db.receiptItems.where({ productId }).each((receiptItem) => {
+      salesAmount += receiptItem.quantity;
+    });
+
+    return salesAmount;
   }
 
   // ユーザの新規登録

@@ -2,11 +2,8 @@ import { A, Outlet } from "@solidjs/router";
 import { Component, createResource, Show } from "solid-js";
 import { service } from "../Service";
 import { useToken } from "./TokenContext";
-import { useSearchParam } from "./Utils";
 
 const Frame: Component = () => {
-  const [filter, setFilter] = useSearchParam("filter", "");
-
   const [token] = useToken();
 
   return (
@@ -17,14 +14,6 @@ const Frame: Component = () => {
         </A>
 
         <div class="flex-grow"></div>
-
-        <input
-          placeholder="検索"
-          type="search"
-          class="rounded-xl bg-[#ddd4] px-4 py-2 placeholder:text-[#444]"
-          value={filter()}
-          onChange={(e) => setFilter(e.currentTarget.value)}
-        />
 
         <A class="p-3 font-bold" href="/products">
           ストア

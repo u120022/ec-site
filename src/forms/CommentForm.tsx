@@ -41,6 +41,7 @@ const CommentForm: Component<{
           required
           rows={8}
           minlength={16}
+          maxlength={200}
           placeholder="テキストを入力。"
           class="w-full resize-none rounded border border-slate-300 p-2"
           value={form.body}

@@ -27,7 +27,7 @@ export class Db extends Dexie {
     super("Db");
 
     this.version(1).stores({
-      products: "++id, name, date, value",
+      products: "++id, date, price, quantity",
       comments: "++id, productId",
       cartItems: "++id, userId, [userId+productId]",
       receipts: "++id, userId",

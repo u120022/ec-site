@@ -50,19 +50,19 @@ const CartItemList: Component<{
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
   // カート内アイテムを削除
-  const popFromCart = async (id: number, count: number) => {
-    await service.popFromCart(props.token, id, count);
+  const popFromCart = async (id: number, quantity: number) => {
+    await service.popFromCart(props.token, id, quantity);
     await refetch();
   };
 
   // カート内アイテムの総額を取得
-  const [totalValue, { refetch: refetchTotalValue }] = createResource(
-    async () => await service.getTotalValueInCart(props.token)
+  const [totalPrice, { refetch: refetchTotalPrice }] = createResource(
+    async () => await service.getTotalPriceInCart(props.token)
   );
 
   // 表示の更新
   const refetch = async () => {
-    await refetchTotalValue();
+    await refetchTotalPrice();
     await refetchCartItems();
     await refetchCount();
   };
@@ -84,7 +84,7 @@ const CartItemList: Component<{
                 cartItem={cartItem}
                 popFromCart={() => popFromCart(cartItem.productId, 1)}
                 clearFromCart={() =>
-                  popFromCart(cartItem.productId, cartItem.count)
+                  popFromCart(cartItem.productId, cartItem.quantity)
                 }
               />
             )}
@@ -102,10 +102,10 @@ const CartItemList: Component<{
         <div class="flex justify-between">
           <div class="text-xl font-bold">合計金額</div>
 
-          <Show when={totalValue()} keyed={true}>
-            {(totalValue) => (
+          <Show when={totalPrice()} keyed={true}>
+            {(totalPrice) => (
               <div class="text-xl text-rose-600">
-                &yen {totalValue.toLocaleString()}
+                &yen {totalPrice.toLocaleString()}
               </div>
             )}
           </Show>
@@ -152,10 +152,10 @@ const CartItem: Component<{
 
             <div class="flex justify-between">
               <div class="text-xl">
-                個数: {props.cartItem.count.toLocaleString()}
+                個数: {props.cartItem.quantity.toLocaleString()}
               </div>
               <div class="text-xl text-rose-600">
-                &yen {product.value.toLocaleString()}
+                &yen {product.price.toLocaleString()}
               </div>
             </div>
 

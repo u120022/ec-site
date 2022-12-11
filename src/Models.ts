@@ -4,8 +4,8 @@ export interface ProductModel {
   desc: string;
   pic: string;
   date: Date;
-  value: number;
-  count: number;
+  price: number;
+  quantity: number;
 }
 
 export interface CommentModel {
@@ -20,7 +20,7 @@ export interface CartItemModel {
   id?: number;
   userId: number;
   productId: number;
-  count: number;
+  quantity: number;
 }
 
 export interface ReceiptModel {
@@ -28,7 +28,7 @@ export interface ReceiptModel {
   userId: number;
   addressId: number;
   paymentId: number;
-  value: number;
+  price: number;
   date: Date;
 }
 
@@ -36,8 +36,8 @@ export interface ReceiptItemModel {
   id?: number;
   receiptId: number;
   productId: number;
-  value: number;
-  count: number;
+  price: number;
+  quantity: number;
 }
 
 export interface UserModel {
