@@ -6,24 +6,37 @@ import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
+const ReceiptListHandle: Component = () => {
+  const [token] = useToken();
+
+  return (
+    <Show
+      when={token()}
+      keyed={true}
+      fallback={<div class="text-slate-600">ログインが必要です。</div>}
+    >
+      {(token) => <ReceiptList token={token} />}
+    </Show>
+  );
+};
 // 1ページに表示する購入履歴の数
 const COUNT_PER_PAGE = 8;
 
 // 購入履歴をリスト表示
-const ReceiptList: Component = () => {
-  const [token] = useToken();
-
+const ReceiptList: Component<{
+  token: string;
+}> = (props) => {
   const [page, setPage] = useSearchParamInt("page", 0);
 
   // レシート一覧を取得
   const [receipts] = createResource(
     page,
-    async (page) => await service.getReceipts(token(), page, COUNT_PER_PAGE)
+    async (page) => await service.getReceipts(props.token, page, COUNT_PER_PAGE)
   );
 
   // 総ページ数を計算
   const [count] = createResource(
-    async () => await service.getReceiptCount(token())
+    async () => await service.getReceiptCount(props.token)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
@@ -43,7 +56,11 @@ const ReceiptList: Component = () => {
         fallback={<div class="text-slate-600">購入履歴はありません。</div>}
       >
         <div class="space-y-3">
-          <For each={receipts()}>{(x) => <ReceiptItemList receipt={x} />}</For>
+          <For each={receipts()}>
+            {(receipt) => (
+              <ReceiptItemList token={props.token} receipt={receipt} />
+            )}
+          </For>
         </div>
 
         <div class="p-3 text-center">
@@ -61,10 +78,9 @@ const ReceiptList: Component = () => {
 // 購入履歴のリスト項目
 // 1つの購入の購入商品一覧をリスト表記
 const ReceiptItemList: Component<{
+  token: string;
   receipt: ReceiptDto;
 }> = (props) => {
-  const [token] = useToken();
-
   // 複数存在するためURLとバインドしない
   const [page, setPage] = createSignal(0);
 
@@ -73,7 +89,7 @@ const ReceiptItemList: Component<{
     page,
     async (page) =>
       await service.getReceiptItems(
-        token(),
+        props.token,
         props.receipt.id,
         page,
         COUNT_PER_PAGE
@@ -82,7 +98,7 @@ const ReceiptItemList: Component<{
 
   // 1回の購入の購入商品の数を取得
   const [count] = createResource(
-    async () => await service.getReceiptItemCount(token(), props.receipt.id)
+    async () => await service.getReceiptItemCount(props.token, props.receipt.id)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
@@ -153,4 +169,4 @@ const ReceiptItem: Component<{
   );
 };
 
-export default ReceiptList;
+export default ReceiptListHandle;

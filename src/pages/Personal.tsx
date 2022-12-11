@@ -8,8 +8,13 @@ const Personal: Component = () => {
   const [token, setToken] = useToken();
 
   const logout = async () => {
-    await service.deleteSession(token());
+    const current = token();
+    if (!current) return;
+
+    await service.deleteSession(current);
+
     setToken(undefined);
+
     navigate("/", { replace: true });
   };
 

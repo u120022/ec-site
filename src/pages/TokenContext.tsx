@@ -7,12 +7,12 @@ import {
   useContext,
 } from "solid-js";
 
-const tokenContext = createContext<
-  [
-    token: () => string | undefined,
-    setToken: (token: string | undefined) => void
-  ]
->([() => undefined, () => {}]);
+type TokenValue = [
+  token: () => string | undefined,
+  setToken: (token: string | undefined) => void
+];
+
+const tokenContext = createContext<TokenValue>();
 
 export const TokenProvider: ParentComponent = (props) => {
   const [token, setToken] = createSignal(Cookies.get("SESSION_TOKEN"));
@@ -35,4 +35,8 @@ export const TokenProvider: ParentComponent = (props) => {
   );
 };
 
-export const useToken = () => useContext(tokenContext);
+export const useToken = () => {
+  const value = useContext(tokenContext);
+  if (!value) throw new Error("Does not exist provider.");
+  return value;
+};

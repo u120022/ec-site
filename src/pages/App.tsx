@@ -31,7 +31,7 @@ const App: Component = () => {
         <Route path="/" component={Frame}>
           <Route path="/" component={Overview} />
           <Route path="/products" component={ProductList} />
-          <Route path="/products/:id" component={Product} />
+          <Route path="/products/:product_id" component={Product} />
           <Route path="/cart" component={CartItemList} />
           <Route path="/purchase" component={Purchase} />
           <Route path="/receipts" component={ReceiptList} />

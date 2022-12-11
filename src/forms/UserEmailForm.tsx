@@ -1,21 +1,21 @@
 import { Component, createResource, createSignal, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { UserEmailFormModel } from "../FormModels";
-import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const UserEmailForm: Component<{
+  token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
-  const [user] = createResource(async () => await service.getUserImpl(token()));
+  const [user] = createResource(
+    async () => await service.getUserPrivate(props.token)
+  );
 
   const [form, setForm] = createStore<UserEmailFormModel>({ email: "" });
   const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
-    const status = await service.updateUser(token(), { email: form.email });
+    const status = await service.updateUser(props.token, { email: form.email });
 
     if (status != "SUCCESSFUL") {
       setFormError("メールアドレスを変更できませんでした。");

@@ -5,13 +5,9 @@ import { useToken } from "./TokenContext";
 import { useSearchParam } from "./Utils";
 
 const Frame: Component = () => {
+  const [filter, setFilter] = useSearchParam("filter", "");
+
   const [token] = useToken();
-
-  const [user] = createResource(
-    async () => await service.getUserPrivate(token())
-  );
-
-  const [filter, setFilter] = useSearchParam("filter", undefined);
 
   return (
     <div class="flex min-h-[100vh] min-w-[1024px] flex-col">
@@ -26,6 +22,7 @@ const Frame: Component = () => {
           placeholder="検索"
           type="search"
           class="rounded-xl bg-[#ddd4] px-4 py-2 placeholder:text-[#444]"
+          value={filter()}
           onChange={(e) => setFilter(e.currentTarget.value)}
         />
 
@@ -40,19 +37,11 @@ const Frame: Component = () => {
         </A>
 
         <Show
-          when={user()}
+          when={token()}
           keyed={true}
-          fallback={
-            <A class="p-3 font-bold" href="/login">
-              ログイン
-            </A>
-          }
+          fallback={<DisabledLoginStatusView />}
         >
-          {(user) => (
-            <A class="p-3 font-bold" href="/personal">
-              {user.name}
-            </A>
-          )}
+          {(token) => <LoginStatusView token={token} />}
         </Show>
       </div>
 
@@ -75,6 +64,32 @@ const Frame: Component = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const LoginStatusView: Component<{
+  token: string;
+}> = (props) => {
+  const [user] = createResource(
+    async () => await service.getUserPrivate(props.token)
+  );
+
+  return (
+    <Show when={user()} keyed={true} fallback={<DisabledLoginStatusView />}>
+      {(user) => (
+        <A class="p-3 font-bold" href="/personal">
+          {user.name}
+        </A>
+      )}
+    </Show>
+  );
+};
+
+const DisabledLoginStatusView: Component = () => {
+  return (
+    <A class="p-3 font-bold" href="/login">
+      ログイン
+    </A>
   );
 };
 

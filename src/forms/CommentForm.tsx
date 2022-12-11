@@ -1,21 +1,19 @@
 import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { CommentFormModel } from "../FormModels";
-import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const CommentForm: Component<{
+  token: string;
   productId: number;
   onSubmit?: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
   const [form, setForm] = createStore<CommentFormModel>({ body: "" });
   const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
     const status = await service.createComment(
-      token(),
+      props.token,
       props.productId,
       form.body
     );

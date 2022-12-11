@@ -1,13 +1,11 @@
 import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const AddressForm: Component<{
+  token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
   const [form, setForm] = createStore({
     name: "",
     country: "",
@@ -17,13 +15,12 @@ const AddressForm: Component<{
   const [formError, setFormError] = createSignal("");
 
   const onSubmit = async () => {
-    const address = {
+    const status = await service.createAddress(props.token, {
       name: form.name,
       country: form.country,
       address: form.address,
       zipcode: form.zipcode,
-    };
-    const status = await service.createAddress(token(), address);
+    });
 
     if (status != "SUCCESSFUL") {
       setFormError("住所を追加できませんでした。");
@@ -37,7 +34,10 @@ const AddressForm: Component<{
 
   return (
     <form class="space-y-3" method="dialog" onSubmit={onSubmit}>
-      <div>住所を追加する。</div>
+      <div>
+        <div>住所を追加する。</div>
+        <div class="text-rose-600">{formError()}</div>
+      </div>
 
       <div>
         <div>氏名</div>

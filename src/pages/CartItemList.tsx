@@ -6,24 +6,58 @@ import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
+const CartItemListHandle: Component = () => {
+  const [token] = useToken();
+
+  return (
+    <Show
+      when={token()}
+      keyed={true}
+      fallback={<div class="text-slate-600">ログインが必要です。</div>}
+    >
+      {(token) => <CartItemList token={token} />}
+    </Show>
+  );
+};
+
 // 1ページに表示される数
 const COUNT_PER_PAGE = 8;
 
 // カート内アイテムの一覧をリスト表示
-const CartItemList: Component = () => {
-  const [token] = useToken();
-
+const CartItemList: Component<{
+  token: string;
+}> = (props) => {
   const [page, setPage] = useSearchParamInt("page", 0);
-
-  // カート内アイテムの総額を取得
-  const [totalValue, { refetch: refetchTotalValue }] = createResource(
-    async () => await service.getTotalValueInCart(token())
-  );
 
   // カート内アイテムを取得
   const [cartItems, { refetch: refetchCartItems }] = createResource(
     page,
-    async (page) => await service.getCartItems(token(), page, COUNT_PER_PAGE)
+    async (page) =>
+      await service.getCartItems(props.token, page, COUNT_PER_PAGE)
+  );
+
+  // カート内に商品が1つでもあるか確認
+  const exists = () => {
+    const current = cartItems();
+    if (!current) return false;
+    return 0 < current.length;
+  };
+
+  // ページ数を計算
+  const [count, { refetch: refetchCount }] = createResource(
+    async () => await service.getCartItemCount(props.token)
+  );
+  const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
+
+  // カート内アイテムを削除
+  const popFromCart = async (id: number, count: number) => {
+    await service.popFromCart(props.token, id, count);
+    await refetch();
+  };
+
+  // カート内アイテムの総額を取得
+  const [totalValue, { refetch: refetchTotalValue }] = createResource(
+    async () => await service.getTotalValueInCart(props.token)
   );
 
   // 表示の更新
@@ -31,25 +65,6 @@ const CartItemList: Component = () => {
     await refetchTotalValue();
     await refetchCartItems();
     await refetchCount();
-  };
-
-  // カート内アイテムを削除
-  const popFromCart = async (id: number, count: number) => {
-    await service.popFromCart(token(), id, count);
-    await refetch();
-  };
-
-  // ページ数を計算
-  const [count, { refetch: refetchCount }] = createResource(
-    async () => await service.getCartItemCount(token())
-  );
-  const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
-
-  // カート内に商品が1つでもあるか確認
-  const exists = () => {
-    const current = cartItems();
-    if (!current) return false;
-    return 0 < current.length;
   };
 
   return (
@@ -64,10 +79,13 @@ const CartItemList: Component = () => {
       >
         <div class="space-y-3">
           <For each={cartItems()}>
-            {(x) => (
+            {(cartItem) => (
               <CartItem
-                cartItem={x}
-                popFromCart={(count) => popFromCart(x.productId, count)}
+                cartItem={cartItem}
+                popFromCart={() => popFromCart(cartItem.productId, 1)}
+                clearFromCart={() =>
+                  popFromCart(cartItem.productId, cartItem.count)
+                }
               />
             )}
           </For>
@@ -106,22 +124,13 @@ const CartItemList: Component = () => {
 // カート内アイテムのリスト項目
 const CartItem: Component<{
   cartItem: CartItemDto;
-  popFromCart: (count: number) => void;
+  popFromCart: () => void;
+  clearFromCart: () => void;
 }> = (props) => {
   // カート内アイテムから商品情報の取得
   const [product] = createResource(
     async () => await service.getProduct(props.cartItem.productId)
   );
-
-  // 1種類のカート内アイテムを1つ削除
-  const popFromCart = () => {
-    props.popFromCart(1);
-  };
-
-  // 1種類のカート内アイテムをすべて削除
-  const popFromCartAll = () => {
-    props.popFromCart(props.cartItem.count);
-  };
 
   return (
     <Show when={product()} keyed={true}>
@@ -153,10 +162,10 @@ const CartItem: Component<{
             <div class="border-b border-slate-300"></div>
 
             <div class="space-x-3">
-              <button class="text-rose-600" onClick={popFromCart}>
+              <button class="text-rose-600" onClick={props.popFromCart}>
                 1つ削除
               </button>
-              <button class="text-rose-600" onClick={popFromCartAll}>
+              <button class="text-rose-600" onClick={props.clearFromCart}>
                 すべて削除
               </button>
             </div>
@@ -167,4 +176,4 @@ const CartItem: Component<{
   );
 };
 
-export default CartItemList;
+export default CartItemListHandle;

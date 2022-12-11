@@ -1,13 +1,11 @@
 import { Component, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
 const PaymentForm: Component<{
+  token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
   const [form, setForm] = createStore({
     cardNumber: "",
     holderName: "",
@@ -18,13 +16,12 @@ const PaymentForm: Component<{
 
   // 支払い方法を作成
   const onSubmit = async () => {
-    const payment = {
+    const status = await service.createPayment(props.token, {
       cardNumber: form.cardNumber,
       holderName: form.holderName,
       expirationDate: form.expirationDate,
       securityCode: form.securityCode,
-    };
-    const status = await service.createPayment(token(), payment);
+    });
 
     if (status != "SUCCESSFUL") {
       setFormError("支払い方法の追加できませんでした。");

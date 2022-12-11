@@ -1,15 +1,15 @@
 import { Component, createResource, createSignal, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { UserPasswordFormModel } from "../FormModels";
-import { useToken } from "../pages/TokenContext";
 import { service } from "../Service";
 
-const UserNameForm: Component<{
+const UserPasswordForm: Component<{
+  token: string;
   onSubmit?: () => void;
 }> = (props) => {
-  const [token] = useToken();
-
-  const [user] = createResource(async () => await service.getUserImpl(token()));
+  const [user] = createResource(
+    async () => await service.getUserPrivate(props.token)
+  );
 
   const [form, setForm] = createStore<UserPasswordFormModel>({
     password: "",
@@ -23,7 +23,7 @@ const UserNameForm: Component<{
       return;
     }
 
-    const status = await service.updateUser(token(), {
+    const status = await service.updateUser(props.token, {
       password: form.password,
     });
 
@@ -79,4 +79,4 @@ const UserNameForm: Component<{
   );
 };
 
-export default UserNameForm;
+export default UserPasswordForm;

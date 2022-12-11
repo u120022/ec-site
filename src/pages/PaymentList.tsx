@@ -1,4 +1,4 @@
-import { Component, createResource, For } from "solid-js";
+import { Component, createResource, For, Show } from "solid-js";
 import { PaymentDto } from "../Dto";
 import PaymentForm from "../forms/PaymentForm";
 import { service } from "../Service";
@@ -6,18 +6,32 @@ import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
+const PaymentListHandle: Component = () => {
+  const [token] = useToken();
+
+  return (
+    <Show
+      when={token()}
+      keyed={true}
+      fallback={<div class="text-slate-600">ログインが必要です。</div>}
+    >
+      {(token) => <PaymentList token={token} />}
+    </Show>
+  );
+};
+
 const COUNT_PER_PAGE = 8;
 
 // 支払い方法一覧のリスト表示
-const PaymentList: Component = () => {
+const PaymentList: Component<{
+  token: string;
+}> = (props) => {
   // URLを解析
   const [page, setPage] = useSearchParamInt("page", 0);
 
-  const [token] = useToken();
-
   const [payments, { refetch: refetchPayments }] = createResource(
     page,
-    async (page) => await service.getPayments(token(), page, COUNT_PER_PAGE)
+    async (page) => await service.getPayments(props.token, page, COUNT_PER_PAGE)
   );
 
   // 表示を更新
@@ -27,13 +41,13 @@ const PaymentList: Component = () => {
   };
 
   const deletePayment = async (id: number) => {
-    await service.deletePayment(token(), id);
+    await service.deletePayment(props.token, id);
     refetch();
   };
 
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
-    async () => await service.getPaymentCount(token())
+    async () => await service.getPaymentCount(props.token)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
@@ -51,7 +65,7 @@ const PaymentList: Component = () => {
       </For>
 
       <div class="rounded border border-slate-300 p-3">
-        <PaymentForm onSubmit={refetch} />
+        <PaymentForm token={props.token} onSubmit={refetch} />
       </div>
 
       <div class="p-3 text-center">
@@ -103,4 +117,4 @@ const PaymentCard: Component<{
   );
 };
 
-export default PaymentList;
+export default PaymentListHandle;

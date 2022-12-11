@@ -1,5 +1,5 @@
 import { Component, createResource, For, Show } from "solid-js";
-import { CommentDto, ProductDto } from "../Dto";
+import { CommentDto } from "../Dto";
 import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
@@ -7,69 +7,107 @@ import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useParamInt, useSearchParamInt } from "./Utils";
 
 // 商品の詳細を表示
-const Product: Component = () => {
-  const id = useParamInt("id", undefined);
+const ProductHandle: Component = () => {
+  const productId = useParamInt("product_id", undefined);
+
+  return (
+    <Show
+      when={productId()}
+      keyed={true}
+      fallback={<div class="text-slate-600">商品が見つかりません。</div>}
+    >
+      {(id) => <Product productId={id} />}
+    </Show>
+  );
+};
+
+const Product: Component<{
+  productId: number;
+}> = (props) => {
+  const [product] = createResource(async () =>
+    service.getProduct(props.productId)
+  );
 
   const [token] = useToken();
 
-  const [product] = createResource(id, async (id) => service.getProduct(id));
+  return (
+    <Show when={product()} keyed={true}>
+      {(product) => (
+        <div class="space-y-6">
+          <div class="flex gap-6">
+            <img
+              src={product.pic}
+              class="aspect-[3/4] basis-1/2 bg-slate-100"
+              alt="product picture"
+            />
 
+            <div class="flex basis-1/2 flex-col gap-3">
+              <div class="text-4xl font-bold">{product.name}</div>
+              <div class="text-2xl text-rose-600">
+                &yen {product.value.toLocaleString()}
+              </div>
+              <div>在庫数: {product.count.toLocaleString()}</div>
+
+              <div class="border-b border-slate-300"></div>
+
+              <div class="text-xl">{product.desc}</div>
+
+              <div class="flex-grow"></div>
+
+              <div class="mx-auto">
+                <Show
+                  when={token()}
+                  keyed={true}
+                  fallback={
+                    <div class="text-slate-600">
+                      購入にはログインが必要です。
+                    </div>
+                  }
+                >
+                  {(token) => (
+                    <ProductPushToCart
+                      token={token}
+                      productId={props.productId}
+                    />
+                  )}
+                </Show>
+              </div>
+            </div>
+          </div>
+
+          <Show when={token()} keyed={true}>
+            {(token) => (
+              <CommentList token={token} productId={props.productId} />
+            )}
+          </Show>
+        </div>
+      )}
+    </Show>
+  );
+};
+
+const ProductPushToCart: Component<{
+  productId: number;
+  token: string;
+}> = (props) => {
   const [cartItem, { refetch: refetchCartItem }] = createResource(
-    id,
-    async (id) => await service.getCartItem(token(), id)
+    async () => await service.getCartItem(props.token, props.productId)
   );
 
   const pushToCart = async () => {
-    await service.pushToCart(token(), id(), 1);
+    await service.pushToCart(props.token, props.productId, 1);
     await refetchCartItem();
   };
 
   return (
-    <div class="space-y-6">
-      <Show when={product()} keyed={true}>
-        {(product) => (
-          <>
-            <div class="flex gap-6">
-              <img
-                src={product.pic}
-                class="aspect-[3/4] basis-1/2 bg-slate-100"
-                alt="product picture"
-              />
+    <div class="flex gap-3">
+      <button class="rounded bg-blue-600 p-3 text-white" onClick={pushToCart}>
+        カートに入れる
+      </button>
 
-              <div class="flex basis-1/2 flex-col gap-3">
-                <div class="text-4xl font-bold">{product.name}</div>
-                <div class="text-2xl text-rose-600">
-                  &yen {product.value.toLocaleString()}
-                </div>
-                <div>在庫数: {product.count.toLocaleString()}</div>
-
-                <div class="border-b border-slate-300"></div>
-
-                <div class="text-xl">{product.desc}</div>
-
-                <div class="flex-grow"></div>
-
-                <div class="mx-auto flex gap-3">
-                  <button
-                    class="rounded bg-blue-600 p-3 text-white"
-                    onClick={pushToCart}
-                  >
-                    カートに入れる
-                  </button>
-
-                  <Show when={cartItem()} keyed={true}>
-                    {(cartItem) => (
-                      <div class="p-3">
-                        カート内に{cartItem.count.toLocaleString()}個
-                      </div>
-                    )}
-                  </Show>
-                </div>
-              </div>
-            </div>
-
-            <CommentList product={product} />
-          </>
+      <Show when={cartItem()} keyed={true}>
+        {(cartItem) => (
+          <div class="p-3">カート内に{cartItem.count.toLocaleString()}個</div>
         )}
       </Show>
     </div>
@@ -81,7 +119,8 @@ const COUNT_PER_PAGE = 10;
 
 // 1種類の商品のコメント一覧をリスト表示
 const CommentList: Component<{
-  product: ProductDto;
+  productId: number;
+  token: string;
 }> = (props) => {
   // ページの状態を保持
   const [page, setPage] = useSearchParamInt("comment_page", 0);
@@ -89,15 +128,15 @@ const CommentList: Component<{
   // コメント一覧を取得
   // productIdかpageが変更されると更新
   const [comments, { refetch: refetchComments }] = createResource(
-    () => ({ id: props.product.id, page: page() }),
-    async ({ id, page }) => await service.getComments(id, page, COUNT_PER_PAGE)
+    page,
+    async (page) =>
+      await service.getComments(props.productId, page, COUNT_PER_PAGE)
   );
 
   // ページ数を計算
   // productIdが変更されると更新
   const [count, { refetch: refetchCount }] = createResource(
-    props.product.id,
-    async (id) => await service.getCommentCount(id)
+    async () => await service.getCommentCount(props.productId)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
@@ -116,7 +155,11 @@ const CommentList: Component<{
       </div>
 
       <div class="rounded border border-slate-300 p-3">
-        <CommentForm productId={props.product.id} onSubmit={refetch} />
+        <CommentForm
+          token={props.token}
+          productId={props.productId}
+          onSubmit={refetch}
+        />
       </div>
 
       <div class="p-3 text-center">
@@ -134,11 +177,21 @@ const CommentList: Component<{
 const Comment: Component<{
   comment: CommentDto;
 }> = (props) => {
+  const [user] = createResource(
+    async () => await service.getUserPublic(props.comment.userId)
+  );
+
   return (
-    <div>
-      {props.comment.body} {props.comment.date.toLocaleString()}
+    <div class="flex gap-3">
+      <Show when={user()} keyed={true}>
+        {(user) => <div class="font-bold">{user.name}</div>}
+      </Show>
+
+      <div>{props.comment.body}</div>
+
+      <div class="text-slate-600">{props.comment.date.toLocaleString()}</div>
     </div>
   );
 };
 
-export default Product;
+export default ProductHandle;

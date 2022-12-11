@@ -3,12 +3,26 @@ import { Component, createResource, Show } from "solid-js";
 import { service } from "../Service";
 import { useToken } from "./TokenContext";
 
-// ユーザ情報を表示
-const User: Component = () => {
+const UserHandle: Component = () => {
   const [token] = useToken();
 
+  return (
+    <Show
+      when={token()}
+      keyed={true}
+      fallback={<div class="text-slate-600">ログインが必要です。</div>}
+    >
+      {(token) => <User token={token} />}
+    </Show>
+  );
+};
+
+// ユーザ情報を表示
+const User: Component<{
+  token: string;
+}> = (props) => {
   const [user] = createResource(
-    async () => await service.getUserPrivate(token())
+    async () => await service.getUserPrivate(props.token)
   );
 
   return (
@@ -45,4 +59,4 @@ const User: Component = () => {
   );
 };
 
-export default User;
+export default UserHandle;

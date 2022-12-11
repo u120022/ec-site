@@ -1,4 +1,4 @@
-import { Component, createResource, For } from "solid-js";
+import { Component, createResource, For, Show } from "solid-js";
 import { AddressDto } from "../Dto";
 import AddressForm from "../forms/AddressForm";
 import { service } from "../Service";
@@ -6,18 +6,33 @@ import PagenateBar from "./PagenateBar";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
+const AddressListHandle: Component = () => {
+  const [token] = useToken();
+
+  return (
+    <Show
+      when={token()}
+      keyed={true}
+      fallback={<div class="text-slate-600">ログインが必要です。</div>}
+    >
+      {(token) => <AddressList token={token} />}
+    </Show>
+  );
+};
+
 const COUNT_PER_PAGE = 8;
 
 // 住所一覧のリスト表示
-const AddressList: Component = () => {
+const AddressList: Component<{
+  token: string;
+}> = (props) => {
   // URLを解析
   const [page, setPage] = useSearchParamInt("page", 0);
 
-  const [token] = useToken();
-
   const [addresses, { refetch: refetchAddresses }] = createResource(
     page,
-    async (page) => await service.getAddresses(token(), page, COUNT_PER_PAGE)
+    async (page) =>
+      await service.getAddresses(props.token, page, COUNT_PER_PAGE)
   );
 
   // 表示を更新
@@ -27,13 +42,13 @@ const AddressList: Component = () => {
   };
 
   const deleteAddress = async (id: number) => {
-    await service.deleteAddress(token(), id);
+    await service.deleteAddress(props.token, id);
     await refetch();
   };
 
   // ページ数を計算
   const [count, { refetch: refetchCount }] = createResource(
-    async () => await service.getAddressCount(token())
+    async () => await service.getAddressCount(props.token)
   );
   const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
 
@@ -51,7 +66,7 @@ const AddressList: Component = () => {
       </For>
 
       <div class="rounded border border-slate-300 p-3">
-        <AddressForm onSubmit={refetch} />
+        <AddressForm token={props.token} onSubmit={refetch} />
       </div>
 
       <div class="p-3 text-center">
@@ -103,4 +118,4 @@ const AddressCard: Component<{
   );
 };
 
-export default AddressList;
+export default AddressListHandle;
