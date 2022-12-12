@@ -630,6 +630,7 @@ export class Service {
       })
       .catch((_) => undefined);
   }
+
   // セッションの数を所得
   async getSessionCount(token: string) {
     return await db.transaction("r", db.sessions, db.users, async () => {

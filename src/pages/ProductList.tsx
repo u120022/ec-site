@@ -1,5 +1,5 @@
 import { A } from "@solidjs/router";
-import { Component, createResource, For } from "solid-js";
+import { Component, createResource, For, Show } from "solid-js";
 import { ProductDto } from "../Dto";
 import { service } from "../Service";
 import PagenateBar from "./PagenateBar";
@@ -60,7 +60,7 @@ const ProductList: Component = () => {
         />
       </div>
 
-      <div class="grid grid-cols-4 gap-3">
+      <div class="grid grid-cols-4 gap-6">
         <For each={products()}>{(x) => <ProductCard product={x} />}</For>
       </div>
 
@@ -79,6 +79,16 @@ const ProductList: Component = () => {
 const ProductCard: Component<{
   product: ProductDto;
 }> = (props) => {
+  const [salesAmount] = createResource(
+    async () => await service.getSalesAmount(props.product.id)
+  );
+  const [favoriteCount] = createResource(
+    async () => await service.getFavoriteCountByProduct(props.product.id)
+  );
+  const [bookmarkCount] = createResource(
+    async () => await service.getBookmarkCountByProduct(props.product.id)
+  );
+
   return (
     <A href={"/ec-site/products/" + props.product.id}>
       <img
@@ -87,9 +97,32 @@ const ProductCard: Component<{
         alt="product picture"
       />
 
-      <div>{props.product.name}</div>
-      <div class="text-rose-600">
+      <div class="text-xl font-bold">{props.product.name}</div>
+      <div class="text-xl text-rose-600">
         &yen {props.product.price.toLocaleString()}
+      </div>
+
+      <div class="flex gap-3">
+        <div>
+          販売数:
+          <Show when={salesAmount()} keyed={true} fallback={<>0</>}>
+            {(salesAmount) => <>{salesAmount.toLocaleString()}</>}
+          </Show>
+        </div>
+
+        <div>
+          お気に入り:
+          <Show when={favoriteCount()} keyed={true} fallback={<>0</>}>
+            {(favoriteCount) => <>{favoriteCount.toLocaleString()}</>}
+          </Show>
+        </div>
+
+        <div>
+          ブックマーク:
+          <Show when={bookmarkCount()} keyed={true} fallback={<>0</>}>
+            {(bookmarkCount) => <>{bookmarkCount.toLocaleString()}</>}
+          </Show>
+        </div>
       </div>
     </A>
   );

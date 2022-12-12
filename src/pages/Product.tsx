@@ -103,7 +103,9 @@ const Product: Component<{
                 when={token()}
                 keyed={true}
                 fallback={
-                  <div class="text-slate-600">購入にはログインが必要です。</div>
+                  <div class="text-center text-slate-600">
+                    購入にはログインが必要です。
+                  </div>
                 }
               >
                 {(token) => (
