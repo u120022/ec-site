@@ -39,6 +39,8 @@ const AddressList: Component<{
   const refetch = async () => {
     await refetchAddresses();
     await refetchCount();
+
+    if (maxPageCount() <= page()) setPage(maxPageCount() - 1);
   };
 
   const deleteAddress = async (id: number) => {

@@ -38,6 +38,8 @@ const PaymentList: Component<{
   const refetch = async () => {
     await refetchPayments();
     await refetchCount();
+
+    if (maxPageCount() <= page()) setPage(maxPageCount() - 1);
   };
 
   const deletePayment = async (id: number) => {

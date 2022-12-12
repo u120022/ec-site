@@ -65,6 +65,8 @@ const CartItemList: Component<{
     await refetchTotalPrice();
     await refetchCartItems();
     await refetchCount();
+
+    if (maxPageCount() <= page()) setPage(maxPageCount() - 1);
   };
 
   return (
@@ -136,7 +138,11 @@ const CartItem: Component<{
   );
 
   return (
-    <Show when={product()} keyed={true}>
+    <Show
+      when={product()}
+      keyed={true}
+      fallback={<div class="flex aspect-[9/2] gap-6 bg-slate-100"></div>}
+    >
       {(product) => (
         <div class="flex gap-6">
           <img

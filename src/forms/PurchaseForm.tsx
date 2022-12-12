@@ -226,12 +226,12 @@ const AddressSelector: Component<{
                 </div>
               }
             >
-              <div
+              <button
                 onClick={(_) => props.setAddressId(address.id)}
-                class="cursor-pointer"
+                class="w-full text-start"
               >
                 <AddressCard address={address} />
-              </div>
+              </button>
             </Show>
           )}
         </For>
@@ -320,12 +320,12 @@ const PaymentSelector: Component<{
                 </div>
               }
             >
-              <div
+              <button
+                class="w-full text-start"
                 onClick={(_) => props.setPaymentId(payment.id)}
-                class="cursor-pointer"
               >
                 <PaymentCard payment={payment} />
-              </div>
+              </button>
             </Show>
           )}
         </For>
