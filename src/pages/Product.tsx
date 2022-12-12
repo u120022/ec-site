@@ -24,9 +24,13 @@ const ProductHandle: Component = () => {
 const Product: Component<{
   productId: number;
 }> = (props) => {
-  const [product] = createResource(async () =>
-    service.getProduct(props.productId)
+  const [product] = createResource(
+		async () => service.getProduct(props.productId)
   );
+
+	const [salesAmount] = createResource(
+		async () => service.getSalesAmount(props.productId)
+	);
 
   const [token] = useToken();
 
@@ -46,7 +50,14 @@ const Product: Component<{
               <div class="text-2xl text-rose-600">
                 &yen {product.price.toLocaleString()}
               </div>
-              <div>在庫数: {product.quantity.toLocaleString()}</div>
+
+							<div class="flex gap-3">
+								<div>在庫数: {product.quantity.toLocaleString()}</div>
+								<Show when={salesAmount()} keyed={true}>
+								 {salesAmount => <div>販売数: {salesAmount.toLocaleString()}</div>}
+								</Show>
+								<div>販売開始日: {product.date.toLocaleDateString()}</div>
+							</div>
 
               <div class="border-b border-slate-300"></div>
 

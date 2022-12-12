@@ -38,14 +38,14 @@ const ProductList: Component = () => {
           value={orderBy()}
           onInput={(e) => setOrderBy(e.currentTarget.value)}
         >
-          <option value="date_des">発売日(新しい)</option>
-          <option value="date_asc">発売日(古い)</option>
+          <option value="date_des">販売開始日(新しい)</option>
+          <option value="date_asc">販売開始日(古い)</option>
           <option value="price_des">価格(高い)</option>
           <option value="price_asc">価格(安い)</option>
           <option value="quantity_des">在庫数(多い)</option>
           <option value="quantity_asc">在庫数(少ない)</option>
-          <option value="sales_amount_des">売上数(多い)</option>
-          <option value="sales_amount_asc">売上数(少ない)</option>
+          <option value="sales_amount_des">販売数(多い)</option>
+          <option value="sales_amount_asc">販売数(少ない)</option>
         </select>
         <input
           type="search"
