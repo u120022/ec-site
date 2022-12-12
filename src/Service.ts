@@ -12,6 +12,7 @@ import {
   toSessionDto,
   toAddressDto,
   toPaymentDto,
+  toBookmarkDto,
 } from "./Dto";
 
 type StatusCode = "SUCCESSFUL" | "INVALID";
@@ -44,16 +45,25 @@ export class Service {
 
     // 並びの順序の指定(高負荷)
     if (params?.orderBy) {
-      const re = /(sales_amount)_(asc|des)/;
+      const re = /(sales_amount|favorite|bookmark)_(asc|des)/;
       const match = re.exec(params?.orderBy);
 
       if (match) {
         let array = await collection.toArray();
 
+        const toSortables = {
+          sales_amount: async (productId: number) =>
+            await this.getSalesAmount(productId),
+          favorite: async (productId: number) =>
+            await this.getFavoriteCountByProduct(productId),
+          bookmark: async (productId: number) =>
+            await this.getBookmarkCountByProduct(productId),
+        } as Record<string, (productId: number) => Promise<number>>;
+
         const sortables = await Promise.all(
           array.map(async (product, index) => ({
             index,
-            sortable: await this.getSalesAmount(product.id as number),
+            sortable: await toSortables[match[1]](product.id as number),
           }))
         );
 
@@ -101,19 +111,29 @@ export class Service {
   // コメントを追加
   async createComment(token: string, productId: number, body: string) {
     return await db
-      .transaction("rw", db.sessions, db.users, db.comments, async () => {
-        if (!body || body.length < 16 || 200 < body.length) throw new Error();
+      .transaction(
+        "rw",
+        db.sessions,
+        db.users,
+        db.products,
+        db.comments,
+        async () => {
+          if (!body || body.length < 16 || 200 < body.length) throw new Error();
 
-        const user = await this.getUserImpl(token);
-        if (!user) throw new Error();
+          const product = await db.products.get(productId);
+          if (!product) throw new Error();
 
-        await db.comments.add({
-          userId: user.id as number,
-          productId,
-          body,
-          date: new Date(),
-        });
-      })
+          const user = await this.getUserImpl(token);
+          if (!user) throw new Error();
+
+          await db.comments.add({
+            userId: user.id as number,
+            productId,
+            body,
+            date: new Date(),
+          });
+        }
+      )
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
   }
@@ -489,8 +509,7 @@ export class Service {
   async getUserImpl(token: string) {
     return await db
       .transaction("r", db.sessions, db.users, async () => {
-        const session = await db.sessions.get(token);
-
+        const session = await db.sessions.get({ token });
         if (!session) throw new Error();
 
         return await db.users.get(session.userId);
@@ -585,10 +604,10 @@ export class Service {
   async deleteSession(token: string) {
     return await db
       .transaction("rw", db.sessions, async () => {
-        const session = db.sessions.get(token);
+        const session = await db.sessions.get({ token });
         if (!session) throw new Error();
 
-        await db.sessions.delete(token);
+        await db.sessions.delete(session.id as number);
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
@@ -810,6 +829,178 @@ export class Service {
       })
       .then<StatusCode>((_) => "SUCCESSFUL")
       .catch<StatusCode>((_) => "INVALID");
+  }
+
+  // 商品をお気に入りに登録する
+  async addFavorite(token: string, productId: number) {
+    return await db
+      .transaction(
+        "rw",
+        db.sessions,
+        db.users,
+        db.products,
+        db.favorites,
+        async () => {
+          const product = await db.products.get(productId);
+          if (!product) throw new Error();
+
+          const user = await this.getUserImpl(token);
+          if (!user) throw new Error();
+
+          const favorite = await db.favorites.get({
+            userId: user.id,
+            productId,
+          });
+          if (favorite) throw new Error();
+
+          await db.favorites.add({ userId: user.id as number, productId });
+        }
+      )
+      .then<StatusCode>((_) => "SUCCESSFUL")
+      .catch<StatusCode>((_) => "INVALID");
+  }
+
+  // 商品をお気に入りから解除する
+  async removeFavorite(token: string, productId: number) {
+    return await db
+      .transaction("rw", db.sessions, db.users, db.favorites, async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const favorite = await db.favorites.get({ userId: user.id, productId });
+        if (!favorite) throw new Error();
+
+        await db.favorites.delete(favorite.id as number);
+      })
+      .then<StatusCode>((_) => "SUCCESSFUL")
+      .catch<StatusCode>((_) => "INVALID");
+  }
+
+  // 商品ごとのお気に入り登録数
+  async getFavoriteCountByProduct(productId: number) {
+    return await db.favorites.where({ productId }).count();
+  }
+
+  // ユーザが商品をお気に入りに登録しているか確認
+  async hasFavorite(token: string, productId: number) {
+    return await db.transaction(
+      "r",
+      db.sessions,
+      db.users,
+      db.favorites,
+      async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const favorite = await db.favorites.get({ userId: user.id, productId });
+        return favorite != undefined;
+      }
+    );
+  }
+
+  // 商品をブックマークに登録する
+  async addBookmark(token: string, productId: number) {
+    return await db
+      .transaction(
+        "rw",
+        db.sessions,
+        db.users,
+        db.products,
+        db.bookmarks,
+        async () => {
+          const product = await db.products.get(productId);
+          if (!product) throw new Error();
+
+          const user = await this.getUserImpl(token);
+          if (!user) throw new Error();
+
+          const bookmark = await db.bookmarks.get({
+            userId: user.id,
+            productId,
+          });
+          if (bookmark) throw new Error();
+
+          await db.bookmarks.add({ userId: user.id as number, productId });
+        }
+      )
+      .then<StatusCode>((_) => "SUCCESSFUL")
+      .catch<StatusCode>((_) => "INVALID");
+  }
+
+  // 商品をブックマークから解除する
+  async removeBookmark(token: string, productId: number) {
+    return await db
+      .transaction("rw", db.sessions, db.users, db.bookmarks, async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const bookmark = await db.bookmarks.get({ userId: user.id, productId });
+        if (!bookmark) throw new Error();
+
+        await db.bookmarks.delete(bookmark.id as number);
+      })
+      .then<StatusCode>((_) => "SUCCESSFUL")
+      .catch<StatusCode>((_) => "INVALID");
+  }
+
+  // 商品ごとのブックマーク登録数
+  async getBookmarkCountByProduct(productId: number) {
+    return await db.bookmarks.where({ productId }).count();
+  }
+
+  // ユーザごとのブックマーク登録一覧
+  async getBookmarks(token: string, page: number, count: number) {
+    return await db.transaction(
+      "r",
+      db.sessions,
+      db.users,
+      db.bookmarks,
+      async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        return (
+          await db.bookmarks
+            .where({ userId: user.id })
+            .offset(count * page)
+            .limit(count)
+            .toArray()
+        ).map(toBookmarkDto);
+      }
+    );
+  }
+
+  // ユーザごとのブックマーク登録数
+  async getBookmarkCount(token: string) {
+    return await db.transaction(
+      "r",
+      db.sessions,
+      db.users,
+      db.bookmarks,
+      async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        return await db.bookmarks.where({ userId: user.id }).count();
+      }
+    );
+  }
+
+  // ユーザが商品をブックマークに登録しているか確認
+  async hasBookmark(token: string, productId: number) {
+    return await db.transaction(
+      "r",
+      db.sessions,
+      db.users,
+      db.bookmarks,
+      async () => {
+        const user = await this.getUserImpl(token);
+        if (!user) throw new Error();
+
+        const bookmark = await db.bookmarks.get({ userId: user.id, productId });
+        return bookmark != undefined;
+      }
+    );
   }
 }
 

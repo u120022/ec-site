@@ -25,12 +25,25 @@ const Product: Component<{
   productId: number;
 }> = (props) => {
   const [product] = createResource(
-		async () => service.getProduct(props.productId)
+    async () => await service.getProduct(props.productId)
   );
 
-	const [salesAmount] = createResource(
-		async () => service.getSalesAmount(props.productId)
-	);
+  const [salesAmount] = createResource(
+    async () => await service.getSalesAmount(props.productId)
+  );
+
+  const [favoriteCount, { refetch: refetchFavoriteCount }] = createResource(
+    async () => await service.getFavoriteCountByProduct(props.productId)
+  );
+
+  const [bookmarkCount, { refetch: refetchBookmarkCount }] = createResource(
+    async () => await service.getBookmarkCountByProduct(props.productId)
+  );
+
+  const refetch = async () => {
+    await refetchFavoriteCount();
+    await refetchBookmarkCount();
+  };
 
   const [token] = useToken();
 
@@ -51,13 +64,34 @@ const Product: Component<{
                 &yen {product.price.toLocaleString()}
               </div>
 
-							<div class="flex gap-3">
-								<div>在庫数: {product.quantity.toLocaleString()}</div>
-								<Show when={salesAmount()} keyed={true}>
-								 {salesAmount => <div>販売数: {salesAmount.toLocaleString()}</div>}
-								</Show>
-								<div>販売開始日: {product.date.toLocaleDateString()}</div>
-							</div>
+              <div>
+                <div class="flex gap-3">
+                  <div>販売開始日: {product.date.toLocaleDateString()}</div>
+                  <div>在庫数: {product.quantity.toLocaleString()}</div>
+                  <div>
+                    販売数:
+                    <Show when={salesAmount()} keyed={true} fallback={<>0</>}>
+                      {(salesAmount) => <>{salesAmount.toLocaleString()}</>}
+                    </Show>
+                  </div>
+                </div>
+
+                <div class="flex gap-3">
+                  <div>
+                    お気に入り登録数:
+                    <Show when={favoriteCount()} keyed={true} fallback={<>0</>}>
+                      {(favoriteCount) => <>{favoriteCount.toLocaleString()}</>}
+                    </Show>
+                  </div>
+
+                  <div>
+                    ブックマーク登録数:
+                    <Show when={bookmarkCount()} keyed={true} fallback={<>0</>}>
+                      {(bookmarkCount) => <>{bookmarkCount.toLocaleString()}</>}
+                    </Show>
+                  </div>
+                </div>
+              </div>
 
               <div class="border-b border-slate-300"></div>
 
@@ -65,24 +99,21 @@ const Product: Component<{
 
               <div class="flex-grow"></div>
 
-              <div class="mx-auto">
-                <Show
-                  when={token()}
-                  keyed={true}
-                  fallback={
-                    <div class="text-slate-600">
-                      購入にはログインが必要です。
-                    </div>
-                  }
-                >
-                  {(token) => (
-                    <ProductPushToCart
-                      token={token}
-                      productId={props.productId}
-                    />
-                  )}
-                </Show>
-              </div>
+              <Show
+                when={token()}
+                keyed={true}
+                fallback={
+                  <div class="text-slate-600">購入にはログインが必要です。</div>
+                }
+              >
+                {(token) => (
+                  <ProductInteract
+                    token={token}
+                    productId={props.productId}
+                    onSubmit={refetch}
+                  />
+                )}
+              </Show>
             </div>
           </div>
 
@@ -97,12 +128,21 @@ const Product: Component<{
   );
 };
 
-const ProductPushToCart: Component<{
+const ProductInteract: Component<{
   productId: number;
   token: string;
+  onSubmit?: () => void;
 }> = (props) => {
   const [cartItem, { refetch: refetchCartItem }] = createResource(
     async () => await service.getCartItem(props.token, props.productId)
+  );
+
+  const [favorite, { refetch: refetchFavorite }] = createResource(
+    async () => await service.hasFavorite(props.token, props.productId)
+  );
+
+  const [bookmark, { refetch: refetchBookmark }] = createResource(
+    async () => await service.hasBookmark(props.token, props.productId)
   );
 
   const pushToCart = async () => {
@@ -110,8 +150,34 @@ const ProductPushToCart: Component<{
     await refetchCartItem();
   };
 
+  const addFavorite = async () => {
+    await service.addFavorite(props.token, props.productId);
+    await refetchFavorite();
+    if (props.onSubmit) props.onSubmit();
+  };
+
+  const removeFavorite = async () => {
+    await service.removeFavorite(props.token, props.productId);
+    await refetchFavorite();
+    if (props.onSubmit) props.onSubmit();
+  };
+
+  const addBookmark = async () => {
+    await service.addBookmark(props.token, props.productId);
+    await refetchBookmark();
+    if (props.onSubmit) props.onSubmit();
+  };
+
+  const removeBookmark = async () => {
+    await service.removeBookmark(props.token, props.productId);
+    await refetchBookmark();
+    if (props.onSubmit) props.onSubmit();
+  };
+
   return (
     <div class="flex gap-3">
+      <div class="flex-grow"></div>
+
       <button class="rounded bg-blue-600 p-3 text-white" onClick={pushToCart}>
         カートに入れる
       </button>
@@ -122,6 +188,42 @@ const ProductPushToCart: Component<{
             カート内に{cartItem.quantity.toLocaleString()}個
           </div>
         )}
+      </Show>
+
+      <div class="flex-grow"></div>
+
+      <Show
+        when={favorite()}
+        keyed={true}
+        fallback={
+          <button class="rounded bg-slate-100 p-3" onClick={addFavorite}>
+            お気に入り
+          </button>
+        }
+      >
+        <button
+          class="rounded bg-blue-600 p-3 text-white"
+          onClick={removeFavorite}
+        >
+          お気に入り
+        </button>
+      </Show>
+
+      <Show
+        when={bookmark()}
+        keyed={true}
+        fallback={
+          <button class="rounded bg-slate-100 p-3" onClick={addBookmark}>
+            ブックマーク
+          </button>
+        }
+      >
+        <button
+          class="rounded bg-blue-600 p-3 text-white"
+          onClick={removeBookmark}
+        >
+          ブックマーク
+        </button>
       </Show>
     </div>
   );

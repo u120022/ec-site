@@ -10,6 +10,8 @@ import {
   ReceiptModel,
   SessionModel,
   UserModel,
+  FavoriteModel,
+  BookmarkModel,
 } from "./Models";
 
 export class Db extends Dexie {
@@ -22,6 +24,8 @@ export class Db extends Dexie {
   addresses!: Table<AddressModel>;
   payments!: Table<PaymentModel>;
   sessions!: Table<SessionModel>;
+  favorites!: Table<FavoriteModel>;
+  bookmarks!: Table<BookmarkModel>;
 
   constructor() {
     super("Db");
@@ -35,7 +39,9 @@ export class Db extends Dexie {
       users: "++id, &email",
       addresses: "++id, userId, [userId+deleted]",
       payments: "++id, userId, [userId+deleted]",
-      sessions: "&token, userId",
+      sessions: "++id, &token, userId",
+      favorites: "++id, productId, userId, [productId+userId]",
+      bookmarks: "++id, productId, userId, [productId+userId]",
     });
   }
 }

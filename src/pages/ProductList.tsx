@@ -46,6 +46,10 @@ const ProductList: Component = () => {
           <option value="quantity_asc">在庫数(少ない)</option>
           <option value="sales_amount_des">販売数(多い)</option>
           <option value="sales_amount_asc">販売数(少ない)</option>
+          <option value="favorite_des">お気に入り登録数(多い)</option>
+          <option value="favorite_asc">お気に入り登録数(少ない)</option>
+          <option value="bookmark_des">ブックマーク登録数(多い)</option>
+          <option value="bookmark_asc">ブックマーク登録数(少ない)</option>
         </select>
         <input
           type="search"

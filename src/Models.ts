@@ -48,6 +48,7 @@ export interface UserModel {
 }
 
 export interface SessionModel {
+  id?: number;
   token: string;
   userId: number;
   date: Date;
@@ -71,4 +72,16 @@ export interface PaymentModel {
   expirationDate: string;
   securityCode: string;
   deleted: 0 | 1;
+}
+
+export interface FavoriteModel {
+  id?: number;
+  userId: number;
+  productId: number;
+}
+
+export interface BookmarkModel {
+  id?: number;
+  userId: number;
+  productId: number;
 }

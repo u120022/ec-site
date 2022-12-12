@@ -18,6 +18,9 @@ const Frame: Component = () => {
         <A class="p-3 font-bold" href="/ec-site/products">
           ストア
         </A>
+        <A class="p-3 font-bold" href="/ec-site/bookmarks">
+          ブックマーク
+        </A>
         <A class="p-3 font-bold" href="/ec-site/cart">
           カート
         </A>

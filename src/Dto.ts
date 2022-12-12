@@ -1,7 +1,9 @@
 import {
   AddressModel,
+  BookmarkModel,
   CartItemModel,
   CommentModel,
+  FavoriteModel,
   PaymentModel,
   ProductModel,
   ReceiptItemModel,
@@ -160,10 +162,8 @@ export const toAddressDto = (model: AddressModel) =>
 export interface PaymentDto {
   id: number;
   userId: number;
-  cardNumber: string;
   holderName: string;
   expirationDate: string;
-  securityCode: string;
 }
 
 export const toPaymentDto = (model: PaymentModel) =>
@@ -173,3 +173,12 @@ export const toPaymentDto = (model: PaymentModel) =>
     holderName: model.holderName,
     expirationDate: model.expirationDate,
   } as PaymentDto);
+
+export interface BookmarkDto {
+  productId: number;
+}
+
+export const toBookmarkDto = (model: BookmarkModel) =>
+  ({
+    productId: model.productId,
+  } as BookmarkDto);
