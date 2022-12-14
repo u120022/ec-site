@@ -2,7 +2,7 @@ import { A, Link } from "@solidjs/router";
 import { Component, createResource, For, Show } from "solid-js";
 import { CartItemDto } from "../Dto";
 import { service } from "../Service";
-import PagenateBar from "./PagenateBar";
+import Pagenator from "./Pagenator";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
@@ -79,7 +79,7 @@ const CartItemList: Component<{
           <div class="text-slate-600">カート内の商品はありません。</div>
         }
       >
-        <div class="space-y-3">
+        <div class="space-y-6">
           <For each={cartItems()}>
             {(cartItem) => (
               <CartItem
@@ -93,13 +93,11 @@ const CartItemList: Component<{
           </For>
         </div>
 
-        <div class="p-3 text-center">
-          <PagenateBar
-            page={page()}
-            onSetPage={setPage}
-            maxPageCount={maxPageCount()}
-          />
-        </div>
+        <Pagenator
+          value={page()}
+          onChange={setPage}
+          maxCount={maxPageCount()}
+        />
 
         <div class="flex justify-between">
           <div class="text-xl font-bold">合計金額</div>

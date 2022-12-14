@@ -2,14 +2,14 @@ import { A } from "@solidjs/router";
 import { Component, createResource, For, Show } from "solid-js";
 import { ProductDto } from "../Dto";
 import { service } from "../Service";
-import PagenateBar from "./PagenateBar";
+import Pagenator from "./Pagenator";
 import { useSearchParamInt, useSearchParam, calcMaxPageCount } from "./Utils";
 
 // 1ページに表示する商品の数
-const COUNT_PER_PAGE = 16;
+const COUNT_PER_PAGE = 8;
 
 // 商品の一覧をグリッド表示
-const ProductList: Component = () => {
+const ProductListHandle: Component = () => {
   const [page, setPage] = useSearchParamInt("page", 0);
   const [orderBy, setOrderBy] = useSearchParam("order_by", "sales_amount_des");
   const [filter, setFilter] = useSearchParam("filter", "");
@@ -64,13 +64,7 @@ const ProductList: Component = () => {
         <For each={products()}>{(x) => <ProductCard product={x} />}</For>
       </div>
 
-      <div class="p-3 text-center">
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
-        />
-      </div>
+      <Pagenator value={page()} onChange={setPage} maxCount={maxPageCount()} />
     </div>
   );
 };
@@ -128,4 +122,4 @@ const ProductCard: Component<{
   );
 };
 
-export default ProductList;
+export default ProductListHandle;

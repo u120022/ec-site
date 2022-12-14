@@ -1,9 +1,9 @@
-import { A, useNavigate } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import { Component, createResource, createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { AddressDto, CartItemDto, PaymentDto } from "../Dto";
+import { AddressDto, PaymentDto } from "../Dto";
 import { PurchaseFormModel } from "../FormModels";
-import PagenateBar from "../pages/PagenateBar";
+import Pagenator from "../pages/Pagenator";
 import { calcMaxPageCount, useSearchParamInt } from "../pages/Utils";
 import { service } from "../Service";
 
@@ -17,38 +17,11 @@ const PurchaseForm: Component<{
 }> = (props) => {
   const navigate = useNavigate();
 
-  const [page, setPage] = useSearchParamInt("page", 0);
-
   const [form, setForm] = createStore<PurchaseFormModel>({
     addressId: undefined,
     paymentId: undefined,
   });
   const [formError, setFormError] = createSignal("");
-
-  // カート内アイテムを取得
-  const [cartItems] = createResource(
-    page,
-    async (page) =>
-      await service.getCartItems(props.token, page, COUNT_PER_PAGE)
-  );
-
-  // ページ数を計算
-  const [count] = createResource(
-    async () => await service.getCartItemCount(props.token)
-  );
-  const maxPageCount = () => calcMaxPageCount(count(), COUNT_PER_PAGE);
-
-  // カート内に商品が1つでもあるか確認
-  const exists = () => {
-    const current = count();
-    if (!current) return false;
-    return 0 < current;
-  };
-
-  // カート内アイテムの総額を取得
-  const [totalPrice] = createResource(
-    async () => await service.getTotalPriceInCart(props.token)
-  );
 
   // 購入を確定する
   const onSubmit = async () => {
@@ -80,105 +53,26 @@ const PurchaseForm: Component<{
 
   return (
     <div class="space-y-6">
-      <div class="text-2xl font-bold">カート内</div>
+      <AddressSelector
+        token={props.token}
+        addressId={form.addressId}
+        setAddressId={(addressId) => setForm({ addressId })}
+      />
 
-      <Show
-        when={exists()}
-        fallback={
-          <div class="text-slate-600">カート内に商品がありません。</div>
-        }
-      >
-        <div class="space-y-3">
-          <For each={cartItems()}>
-            {(cartItem) => <CartItem cartItem={cartItem} />}
-          </For>
-        </div>
+      <PaymentSelector
+        token={props.token}
+        paymentId={form.paymentId}
+        setPaymentId={(paymentId) => setForm({ paymentId })}
+      />
 
-        <div class="p-3 text-center">
-          <PagenateBar
-            page={page()}
-            onSetPage={setPage}
-            maxPageCount={maxPageCount()}
-          />
-        </div>
+      <div class="text-rose-600">{formError()}</div>
 
-        <div class="flex justify-between">
-          <div class="text-xl font-bold">合計金額</div>
-
-          <Show when={totalPrice()} keyed={true}>
-            {(totalPrice) => (
-              <div class="text-xl text-rose-600">
-                &yen {totalPrice.toLocaleString()}
-              </div>
-            )}
-          </Show>
-        </div>
-
-        <AddressSelector
-          token={props.token}
-          addressId={form.addressId}
-          setAddressId={(addressId) => setForm({ addressId })}
-        />
-
-        <PaymentSelector
-          token={props.token}
-          paymentId={form.paymentId}
-          setPaymentId={(paymentId) => setForm({ paymentId })}
-        />
-
-        <div class="text-rose-600">{formError()}</div>
-
-        <div class="justify-between text-center">
-          <button onClick={onSubmit} class="rounded bg-blue-600 p-3 text-white">
-            購入
-          </button>
-        </div>
-      </Show>
+      <div class="justify-between text-center">
+        <button onClick={onSubmit} class="rounded bg-blue-600 p-3 text-white">
+          購入
+        </button>
+      </div>
     </div>
-  );
-};
-
-// カート内アイテムのリスト項目
-const CartItem: Component<{
-  cartItem: CartItemDto;
-}> = (props) => {
-  // カート内アイテムから商品情報の取得
-  const [product] = createResource(
-    async () => await service.getProduct(props.cartItem.productId)
-  );
-
-  return (
-    <Show when={product()} keyed={true}>
-      {(product) => (
-        <div class="flex gap-6">
-          <img
-            class="aspect-[3/4] basis-1/6 bg-slate-100"
-            src={product.pic}
-            alt="product picture"
-          />
-
-          <div class="flex-grow space-y-3">
-            <A
-              class="text-2xl font-bold"
-              href={"/ec-site/products/" + props.cartItem.productId}
-            >
-              {product.name}
-            </A>
-
-            <div class="flex justify-between">
-              <div class="text-xl">
-                個数: {props.cartItem.quantity.toLocaleString()}
-              </div>
-              <div class="text-xl text-rose-600">
-                &yen {product.price.toLocaleString()}
-              </div>
-            </div>
-
-            <div class="border-b border-slate-300"></div>
-          </div>
-        </div>
-      )}
-    </Show>
   );
 };
 
@@ -236,10 +130,10 @@ const AddressSelector: Component<{
           )}
         </For>
 
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
+        <Pagenator
+          value={page()}
+          onChange={setPage}
+          maxCount={maxPageCount()}
         />
       </Show>
     </div>
@@ -330,10 +224,10 @@ const PaymentSelector: Component<{
           )}
         </For>
 
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
+        <Pagenator
+          value={page()}
+          onChange={setPage}
+          maxCount={maxPageCount()}
         />
       </Show>
     </div>

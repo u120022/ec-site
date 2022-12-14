@@ -1,7 +1,7 @@
 import { Component, createResource, For, Show } from "solid-js";
 import { SessionModel } from "../Models";
 import { service } from "../Service";
-import PagenateBar from "./PagenateBar";
+import Pagenator from "./Pagenator";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
@@ -75,13 +75,7 @@ const SessionList: Component<{
         </For>
       </div>
 
-      <div class="p-3 text-center">
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
-        />
-      </div>
+      <Pagenator value={page()} onChange={setPage} maxCount={maxPageCount()} />
     </div>
   );
 };

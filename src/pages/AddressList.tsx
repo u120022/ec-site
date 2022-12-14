@@ -2,7 +2,7 @@ import { Component, createResource, For, Show } from "solid-js";
 import { AddressDto } from "../Dto";
 import AddressForm from "../forms/AddressForm";
 import { service } from "../Service";
-import PagenateBar from "./PagenateBar";
+import Pagenator from "./Pagenator";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useSearchParamInt } from "./Utils";
 
@@ -71,13 +71,7 @@ const AddressList: Component<{
         <AddressForm token={props.token} onSubmit={refetch} />
       </div>
 
-      <div class="p-3 text-center">
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
-        />
-      </div>
+      <Pagenator value={page()} onChange={setPage} maxCount={maxPageCount()} />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { Component, createResource, For, Show } from "solid-js";
 import { CommentDto } from "../Dto";
 import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
-import PagenateBar from "./PagenateBar";
+import Pagenator from "./Pagenator";
 import { useToken } from "./TokenContext";
 import { calcMaxPageCount, useParamInt, useSearchParamInt } from "./Utils";
 
@@ -279,13 +279,7 @@ const CommentList: Component<{
         />
       </div>
 
-      <div class="p-3 text-center">
-        <PagenateBar
-          page={page()}
-          onSetPage={setPage}
-          maxPageCount={maxPageCount()}
-        />
-      </div>
+      <Pagenator value={page()} onChange={setPage} maxCount={maxPageCount()} />
     </div>
   );
 };
