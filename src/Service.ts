@@ -154,11 +154,12 @@ export class Service {
       .catch<StatusCode>((_) => "INVALID");
   }
 
-  // コメント一覧を取得
+  // コメント一覧を取得(IDの降順で時系列順に並べる)
   async getComments(productId: number, page: number, count: number) {
     return (
       await db.comments
         .where({ productId })
+        .reverse()
         .offset(page * count)
         .limit(count)
         .toArray()
