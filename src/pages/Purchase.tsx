@@ -107,11 +107,13 @@ const CartItemCard: Component<{
     <Show when={product()} keyed={true}>
       {(product) => (
         <div class="flex gap-6">
-          <img
-            class="aspect-[3/4] basis-1/6 bg-slate-100"
-            src={product.pic}
-            alt="product picture"
-          />
+          <div class="basis-1/6">
+            <img
+              class="aspect-[3/4] w-full bg-slate-100"
+              src={product.pic}
+              alt="product picture"
+            />
+          </div>
 
           <div class="flex-grow space-y-3">
             <A

@@ -1,5 +1,14 @@
 import { A } from "@solidjs/router";
-import { Component, createResource, createSignal, For, Show } from "solid-js";
+import gsap from "gsap";
+import {
+  Component,
+  createEffect,
+  createResource,
+  createSignal,
+  For,
+  onMount,
+  Show,
+} from "solid-js";
 import { ReceiptDto, ReceiptItemDto } from "../Dto";
 import { service } from "../Service";
 import Pagenator from "./Pagenator";
@@ -47,9 +56,19 @@ const ReceiptList: Component<{
     return 0 < current;
   };
 
+  // アニメーションを登録
+  onMount(() => {
+    gsap.from(".slide-in", { opacity: 0, x: 20 });
+  });
+
+  createEffect(() => {
+    if (receipts() == undefined) return;
+    gsap.from(".slide-in-each", { opacity: 0, x: 20, stagger: 0.1 });
+  });
+
   return (
     <div class="space-y-6">
-      <div class="text-2xl font-bold">購入履歴</div>
+      <div class="slide-in text-2xl font-bold">購入履歴</div>
 
       <Show
         when={exists()}
@@ -108,7 +127,7 @@ const ReceiptItemList: Component<{
   );
 
   return (
-    <div class="space-y-3 rounded border border-slate-300 p-3">
+    <div class="slide-in-each space-y-3 rounded border border-slate-300 p-3">
       <div class="text-xl font-bold">{props.receipt.date.toLocaleString()}</div>
       <div class="text-rose-600">
         &yen {props.receipt.price.toLocaleString()}
@@ -166,11 +185,13 @@ const ReceiptItem: Component<{
     <Show when={product()} keyed={true}>
       {(product) => (
         <div class="flex gap-3">
-          <img
-            class="aspect-[3/4] basis-1/12 bg-slate-100"
-            src={product.pic}
-            alt="product picture"
-          />
+          <div class="basis-1/12">
+            <img
+              class="aspect-[3/4] w-full bg-slate-100"
+              src={product.pic}
+              alt="product picture"
+            />
+          </div>
 
           <div class="flex-grow">
             <A

@@ -8,7 +8,7 @@ const Frame: Component = () => {
 
   return (
     <div class="flex min-h-[100vh] min-w-[1024px] flex-col">
-      <div class="sticky top-0 mb-6 flex gap-3 bg-[#fff4] p-3 shadow backdrop-blur">
+      <div class="sticky top-0 z-20 mb-6 flex gap-3 bg-[#fff4] p-3 shadow backdrop-blur">
         <A class="p-3 font-bold" href="/ec-site">
           ec-site
         </A>

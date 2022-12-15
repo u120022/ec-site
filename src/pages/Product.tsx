@@ -1,4 +1,5 @@
-import { Component, createResource, For, Show } from "solid-js";
+import gsap from "gsap";
+import { Component, createEffect, createResource, For, Show } from "solid-js";
 import { CommentDto } from "../Dto";
 import CommentForm from "../forms/CommentForm";
 import { service } from "../Service";
@@ -47,6 +48,13 @@ const Product: Component<{
 
   const [token] = useToken();
 
+  // アニメーションを登録
+  createEffect(() => {
+    if (product() == undefined) return;
+    gsap.from(".fade-in", { opacity: 0, y: 10 });
+    gsap.from(".slide-in-each", { opacity: 0, x: 20, stagger: 0.1 });
+  });
+
   return (
     <Show when={product()} keyed={true}>
       {(product) => (
@@ -54,18 +62,18 @@ const Product: Component<{
           <div class="flex gap-6">
             <img
               src={product.pic}
-              class="aspect-[3/4] basis-1/2 bg-slate-100"
+              class="fade-in aspect-[3/4] basis-1/2 bg-slate-100"
               alt="product picture"
             />
 
             <div class="flex basis-1/2 flex-col gap-3">
-              <div class="text-4xl font-bold">{product.name}</div>
-              <div class="text-2xl text-rose-600">
+              <div class="slide-in-each text-4xl font-bold">{product.name}</div>
+              <div class="slide-in-each text-2xl text-rose-600">
                 &yen {product.price.toLocaleString()}
               </div>
 
               <div>
-                <div class="flex gap-3">
+                <div class="slide-in-each flex gap-3">
                   <div>販売開始日: {product.date.toLocaleDateString()}</div>
                   <div>在庫数: {product.quantity.toLocaleString()}</div>
                   <div>
@@ -76,7 +84,7 @@ const Product: Component<{
                   </div>
                 </div>
 
-                <div class="flex gap-3">
+                <div class="slide-in-each flex gap-3">
                   <div>
                     お気に入り登録数:
                     <Show when={favoriteCount()} keyed={true} fallback={<>0</>}>
@@ -93,9 +101,9 @@ const Product: Component<{
                 </div>
               </div>
 
-              <div class="border-b border-slate-300"></div>
+              <div class="slide-in-each border-b border-slate-300"></div>
 
-              <div class="text-xl">{product.desc}</div>
+              <div class="slide-in-each text-xl">{product.desc}</div>
 
               <div class="flex-grow"></div>
 
@@ -103,7 +111,7 @@ const Product: Component<{
                 when={token()}
                 keyed={true}
                 fallback={
-                  <div class="text-center text-slate-600">
+                  <div class="slide-in-each text-center text-slate-600">
                     購入にはログインが必要です。
                   </div>
                 }
@@ -152,35 +160,30 @@ const ProductInteract: Component<{
     await refetchCartItem();
   };
 
-  const addFavorite = async () => {
-    await service.addFavorite(props.token, props.productId);
+  const toggleFavorite = async () => {
+    if (favorite()) await service.removeFavorite(props.token, props.productId);
+    else await service.addFavorite(props.token, props.productId);
+
     await refetchFavorite();
     if (props.onSubmit) props.onSubmit();
   };
 
-  const removeFavorite = async () => {
-    await service.removeFavorite(props.token, props.productId);
-    await refetchFavorite();
-    if (props.onSubmit) props.onSubmit();
-  };
+  const toggleBookmark = async () => {
+    if (bookmark()) await service.removeBookmark(props.token, props.productId);
+    else await service.addBookmark(props.token, props.productId);
 
-  const addBookmark = async () => {
-    await service.addBookmark(props.token, props.productId);
-    await refetchBookmark();
-    if (props.onSubmit) props.onSubmit();
-  };
-
-  const removeBookmark = async () => {
-    await service.removeBookmark(props.token, props.productId);
     await refetchBookmark();
     if (props.onSubmit) props.onSubmit();
   };
 
   return (
-    <div class="flex gap-3">
+    <div class="slide-in-each flex gap-3">
       <div class="flex-grow"></div>
 
-      <button class="rounded bg-blue-600 p-3 text-white" onClick={pushToCart}>
+      <button
+        class="rounded bg-blue-600 p-3 text-white transition active:scale-95 active:bg-blue-400"
+        onClick={pushToCart}
+      >
         カートに入れる
       </button>
 
@@ -194,39 +197,27 @@ const ProductInteract: Component<{
 
       <div class="flex-grow"></div>
 
-      <Show
-        when={favorite()}
-        keyed={true}
-        fallback={
-          <button class="rounded bg-slate-100 p-3" onClick={addFavorite}>
-            お気に入り
-          </button>
-        }
+      <button
+        class="rounded p-3 transition active:scale-95"
+        classList={{
+          "text-white bg-blue-600 active:bg-blue-500": favorite(),
+          "text-black bg-slate-100 active:bg-slate-200": !favorite(),
+        }}
+        onClick={toggleFavorite}
       >
-        <button
-          class="rounded bg-blue-600 p-3 text-white"
-          onClick={removeFavorite}
-        >
-          お気に入り
-        </button>
-      </Show>
+        お気に入り
+      </button>
 
-      <Show
-        when={bookmark()}
-        keyed={true}
-        fallback={
-          <button class="rounded bg-slate-100 p-3" onClick={addBookmark}>
-            ブックマーク
-          </button>
-        }
+      <button
+        class="rounded p-3 transition active:scale-95"
+        classList={{
+          "text-white bg-blue-600 active:bg-blue-500": bookmark(),
+          "text-black bg-slate-100 active:bg-slate-200": !bookmark(),
+        }}
+        onClick={toggleBookmark}
       >
-        <button
-          class="rounded bg-blue-600 p-3 text-white"
-          onClick={removeBookmark}
-        >
-          ブックマーク
-        </button>
-      </Show>
+        ブックマーク
+      </button>
     </div>
   );
 };
@@ -264,11 +255,11 @@ const CommentList: Component<{
   };
 
   return (
-    <div class="space-y-3">
+    <div class="fade-in space-y-3">
       <div class="text-2xl font-bold">コメント</div>
 
       <div class="space-y-3">
-        <For each={comments()}>{(x) => <Comment comment={x} />}</For>
+        <For each={comments()}>{(x) => <CommentCard comment={x} />}</For>
       </div>
 
       <div class="rounded border border-slate-300 p-3">
@@ -285,7 +276,7 @@ const CommentList: Component<{
 };
 
 // コメントの表示
-const Comment: Component<{
+const CommentCard: Component<{
   comment: CommentDto;
 }> = (props) => {
   const [user] = createResource(

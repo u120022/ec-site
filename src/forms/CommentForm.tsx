@@ -43,13 +43,16 @@ const CommentForm: Component<{
           minlength={16}
           maxlength={200}
           placeholder="テキストを入力。"
-          class="w-full resize-none rounded border border-slate-300 p-2"
+          class="w-full resize-none rounded border border-slate-300 p-2 outline-0"
           value={form.body}
           onInput={(e) => setForm({ body: e.currentTarget.value })}
         />
       </div>
 
-      <input type="submit" class="rounded bg-blue-600 p-3 py-2 text-white" />
+      <input
+        type="submit"
+        class="rounded bg-blue-600 p-3 py-2 text-white transition active:scale-95 active:bg-blue-500"
+      />
     </form>
   );
 };
