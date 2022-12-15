@@ -8,7 +8,7 @@ const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
 const Frame = lazy(() => import("./Frame"));
 const Overview = lazy(() => import("./Overview"));
-const ProductList = lazy(() => import("./ProductList"));
+const ProductList = lazy(() => import("./ProductList/Handle"));
 const Product = lazy(() => import("./Product"));
 const BookmarkList = lazy(() => import("./BookmarkList"));
 const CartItemList = lazy(() => import("./CartItemList"));

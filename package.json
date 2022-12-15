@@ -23,6 +23,7 @@
   "dependencies": {
     "@solidjs/router": "^0.5.1",
     "dexie": "^3.2.2",
+    "gsap": "^3.11.3",
     "js-cookie": "^3.0.1",
     "solid-js": "^1.5.1"
   }
