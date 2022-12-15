@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
 import gsap from "gsap";
-import { Component, createEffect, For, onMount, Show } from "solid-js";
+import { Component, createEffect, For, Show } from "solid-js";
 import Pagenator from "../Pagenator";
 import { ProductModel, useHandle } from "./Handle";
 
@@ -36,6 +36,11 @@ const ProductList: Component = () => {
     handle.setPage(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+	const setPage = (value: number) => {
+		handle.setPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+	};
 
   // 商品の読み込み完了時にアニメーションを開始
   createEffect(() => {
@@ -81,7 +86,7 @@ const ProductList: Component = () => {
 
         <Pagenator
           value={handle.getPage()}
-          onChange={handle.setPage}
+          onChange={setPage}
           maxCount={getMaxPageCount()}
         />
       </Show>
