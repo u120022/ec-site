@@ -196,7 +196,7 @@ const ReceiptItem: Component<{
           <div class="flex-grow">
             <A
               class="text-xl font-bold"
-              href={"/ec-site/products/" + props.receiptItem.receiptId}
+              href={"/ec-site/products/" + props.receiptItem.productId}
             >
               {product.name}
             </A>
