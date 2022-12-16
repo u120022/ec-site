@@ -26,9 +26,7 @@ const Attention: Component = () => {
         <li>
           商品の購入によって購入額の請求や商品が発送されることはありません。
         </li>
-        <li>
-          ユーザ認証には簡易的なセッション認証を行います。
-        </li>
+        <li>ユーザ認証には簡易的なセッション認証を行います。</li>
       </ul>
       <br />
       <div class="font-bold">その他</div>
@@ -46,7 +44,7 @@ const Attention: Component = () => {
           <div>名前: Alice</div>
           <div>Eメール: alice@example.com</div>
           <div>パスワード: alice</div>
-					<div>住所と支払い方法が登録済み</div>
+          <div>住所と支払い方法が登録済み</div>
         </li>
         <li>
           <div>名前: Bob</div>

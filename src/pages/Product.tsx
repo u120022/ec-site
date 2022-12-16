@@ -127,11 +127,7 @@ const Product: Component<{
             </div>
           </div>
 
-          <Show when={token()} keyed={true}>
-            {(token) => (
-              <CommentList token={token} productId={props.productId} />
-            )}
-          </Show>
+          <CommentList productId={props.productId} />
         </div>
       )}
     </Show>
@@ -228,7 +224,6 @@ const COUNT_PER_PAGE = 10;
 // 1種類の商品のコメント一覧をリスト表示
 const CommentList: Component<{
   productId: number;
-  token: string;
 }> = (props) => {
   // ページの状態を保持
   const [page, setPage] = useSearchParamInt("comment_page", 0);
@@ -254,21 +249,32 @@ const CommentList: Component<{
     await refetchCount();
   };
 
+  const [token] = useToken();
+
   return (
     <div class="fade-in space-y-3">
       <div class="text-2xl font-bold">コメント</div>
 
       <div class="space-y-3">
-        <For each={comments()}>{(x) => <CommentCard comment={x} />}</For>
+        <For
+          each={comments()}
+          fallback={<div class="text-slate-600">コメントはありません。</div>}
+        >
+          {(x) => <CommentCard comment={x} />}
+        </For>
       </div>
 
-      <div class="rounded border border-slate-300 p-3">
-        <CommentForm
-          token={props.token}
-          productId={props.productId}
-          onSubmit={refetch}
-        />
-      </div>
+      <Show when={token()} keyed={true}>
+        {(token) => (
+          <div class="rounded border border-slate-300 p-3">
+            <CommentForm
+              token={token}
+              productId={props.productId}
+              onSubmit={refetch}
+            />
+          </div>
+        )}
+      </Show>
 
       <Pagenator value={page()} onChange={setPage} maxCount={maxPageCount()} />
     </div>

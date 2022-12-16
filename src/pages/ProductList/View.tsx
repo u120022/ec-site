@@ -37,10 +37,10 @@ const ProductList: Component = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-	const setPage = (value: number) => {
-		handle.setPage(value);
+  const setPage = (value: number) => {
+    handle.setPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });
-	};
+  };
 
   // 商品の読み込み完了時にアニメーションを開始
   createEffect(() => {
